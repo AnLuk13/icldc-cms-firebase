@@ -1,5 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
 // Mock data - same as in route.ts (in production, this would be shared from a database)
 const mockNews = [
@@ -29,58 +30,44 @@ const mockNews = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-]
+];
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const newsItem = mockNews.find((n) => n._id === params.id)
-
-    if (!newsItem) {
-      return NextResponse.json({ message: "News article not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(newsItem)
+    await requireAuth();
+    return forwardToNestJS(
+      request,
+      `/news/${params.id}`,
+      mockNews.find((n) => n._id === params.id)
+    );
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const newsData = await request.json()
-    const newsIndex = mockNews.findIndex((n) => n._id === params.id)
-
-    if (newsIndex === -1) {
-      return NextResponse.json({ message: "News article not found" }, { status: 404 })
-    }
-
-    mockNews[newsIndex] = {
-      ...mockNews[newsIndex],
-      ...newsData,
-      updatedAt: new Date(),
-    }
-
-    return NextResponse.json(mockNews[newsIndex])
+    await requireAuth();
+    return forwardToNestJS(request, `/news/${params.id}`);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const newsIndex = mockNews.findIndex((n) => n._id === params.id)
-
-    if (newsIndex === -1) {
-      return NextResponse.json({ message: "News article not found" }, { status: 404 })
-    }
-
-    mockNews.splice(newsIndex, 1)
-
-    return NextResponse.json({ success: true })
+    await requireAuth();
+    return forwardToNestJS(request, `/news/${params.id}`);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

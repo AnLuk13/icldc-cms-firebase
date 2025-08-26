@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
-import type { News } from "@/lib/types"
+import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
-// Mock data - replace with actual MongoDB integration
-const mockNews: News[] = [
+// Mock data - fallback when NestJS is not available
+const mockNews = [
   {
     _id: "1",
     name: {
@@ -75,33 +75,22 @@ const mockNews: News[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-]
+];
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth()
-    return NextResponse.json(mockNews)
+    await requireAuth();
+    return forwardToNestJS(request, "/news", mockNews);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth()
-    const newsData = await request.json()
-
-    const newNews: News = {
-      _id: Date.now().toString(),
-      ...newsData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-
-    mockNews.push(newNews)
-
-    return NextResponse.json(newNews, { status: 201 })
+    await requireAuth();
+    return forwardToNestJS(request, "/news");
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

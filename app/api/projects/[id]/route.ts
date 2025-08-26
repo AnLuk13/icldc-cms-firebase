@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { requireAuth } from "@/lib/auth"
+import { forwardToNestJS } from "@/lib/nestjs-proxy"
 
 // Mock data - same as in route.ts (in production, this would be shared from a database)
 const mockProjects = [
@@ -29,13 +30,8 @@ const mockProjects = [
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireAuth()
-    const project = mockProjects.find((p) => p._id === params.id)
-
-    if (!project) {
-      return NextResponse.json({ message: "Project not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(project)
+    return forwardToNestJS(request, `/projects/${params.id}`, 
+      mockProjects.find((p) => p._id === params.id))
   } catch (error) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
@@ -44,20 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireAuth()
-    const projectData = await request.json()
-    const projectIndex = mockProjects.findIndex((p) => p._id === params.id)
-
-    if (projectIndex === -1) {
-      return NextResponse.json({ message: "Project not found" }, { status: 404 })
-    }
-
-    mockProjects[projectIndex] = {
-      ...mockProjects[projectIndex],
-      ...projectData,
-      updatedAt: new Date(),
-    }
-
-    return NextResponse.json(mockProjects[projectIndex])
+    return forwardToNestJS(request, `/projects/${params.id}`)
   } catch (error) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }
@@ -66,15 +49,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireAuth()
-    const projectIndex = mockProjects.findIndex((p) => p._id === params.id)
-
-    if (projectIndex === -1) {
-      return NextResponse.json({ message: "Project not found" }, { status: 404 })
-    }
-
-    mockProjects.splice(projectIndex, 1)
-
-    return NextResponse.json({ success: true })
+    return forwardToNestJS(request, `/projects/${params.id}`)
   } catch (error) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
   }

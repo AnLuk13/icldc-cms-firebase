@@ -20,14 +20,20 @@ export async function middleware(request: NextRequest) {
   }
 
   // Verify token
-  const payload = await verifyToken(token)
-  if (!payload) {
+  try {
+    const payload = await verifyToken(token)
+    if (!payload) {
+      const response = NextResponse.redirect(new URL("/login", request.url))
+      response.cookies.delete("auth-token")
+      return response
+    }
+    
+    return NextResponse.next()
+  } catch (error) {
     const response = NextResponse.redirect(new URL("/login", request.url))
     response.cookies.delete("auth-token")
     return response
   }
-
-  return NextResponse.next()
 }
 
 export const config = {

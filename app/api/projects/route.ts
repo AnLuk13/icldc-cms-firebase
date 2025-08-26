@@ -1,9 +1,9 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
-import type { Project } from "@/lib/types"
+import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
-// Mock data - replace with actual MongoDB integration
-const mockProjects: Project[] = [
+// Mock data - fallback when NestJS is not available
+const mockProjects = [
   {
     _id: "1",
     name: {
@@ -45,33 +45,22 @@ const mockProjects: Project[] = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-]
+];
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAuth()
-    return NextResponse.json(mockProjects)
+    await requireAuth();
+    return forwardToNestJS(request, "/projects", mockProjects);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAuth()
-    const projectData = await request.json()
-
-    const newProject: Project = {
-      _id: Date.now().toString(),
-      ...projectData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }
-
-    mockProjects.push(newProject)
-
-    return NextResponse.json(newProject, { status: 201 })
+    await requireAuth();
+    return forwardToNestJS(request, "/projects");
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

@@ -1,5 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { requireAuth } from "@/lib/auth"
+import { type NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
+import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
 // Mock data - same as in route.ts (in production, this would be shared from a database)
 const mockPartners = [
@@ -21,58 +22,44 @@ const mockPartners = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-]
+];
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const partner = mockPartners.find((p) => p._id === params.id)
-
-    if (!partner) {
-      return NextResponse.json({ message: "Partner not found" }, { status: 404 })
-    }
-
-    return NextResponse.json(partner)
+    await requireAuth();
+    return forwardToNestJS(
+      request,
+      `/partners/${params.id}`,
+      mockPartners.find((p) => p._id === params.id)
+    );
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const partnerData = await request.json()
-    const partnerIndex = mockPartners.findIndex((p) => p._id === params.id)
-
-    if (partnerIndex === -1) {
-      return NextResponse.json({ message: "Partner not found" }, { status: 404 })
-    }
-
-    mockPartners[partnerIndex] = {
-      ...mockPartners[partnerIndex],
-      ...partnerData,
-      updatedAt: new Date(),
-    }
-
-    return NextResponse.json(mockPartners[partnerIndex])
+    await requireAuth();
+    return forwardToNestJS(request, `/partners/${params.id}`);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    await requireAuth()
-    const partnerIndex = mockPartners.findIndex((p) => p._id === params.id)
-
-    if (partnerIndex === -1) {
-      return NextResponse.json({ message: "Partner not found" }, { status: 404 })
-    }
-
-    mockPartners.splice(partnerIndex, 1)
-
-    return NextResponse.json({ success: true })
+    await requireAuth();
+    return forwardToNestJS(request, `/partners/${params.id}`);
   } catch (error) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 }

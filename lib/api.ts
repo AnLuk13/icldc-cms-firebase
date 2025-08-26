@@ -1,20 +1,32 @@
 import type { Project, Partner, Event, News } from "./types"
 
-const API_BASE = "/api"
+// API Error class for better error handling
+export class ApiError extends Error {
+  public status: number
+  public data?: any
+
+  constructor(message: string, status: number, data?: any) {
+    super(message)
+    this.name = "ApiError"
+    this.status = status
+    this.data = data
+  }
+}
 
 // Generic API helper
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api${endpoint}`, {
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
     },
+    credentials: "include", // Include cookies in requests
     ...options,
   })
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: "Request failed" }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    throw new ApiError(error.message || `HTTP ${response.status}`, response.status, error)
   }
 
   return response.json()
@@ -111,4 +123,27 @@ export function convertFileToBase64(file: File): Promise<string> {
     reader.onerror = reject
     reader.readAsDataURL(file)
   })
+}
+
+// Authentication API
+export const authApi = {
+  login: (credentials: { email: string; password: string }) =>
+    apiRequest<{ user: any; token: string; message: string }>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    }),
+  logout: () =>
+    apiRequest<{ message: string }>("/auth/logout", {
+      method: "POST",
+    }),
+}
+
+// Home Content API  
+export const homeContentApi = {
+  get: () => apiRequest<any>("/home-content"),
+  update: (content: any) =>
+    apiRequest<any>("/home-content", {
+      method: "PUT",
+      body: JSON.stringify(content),
+    }),
 }

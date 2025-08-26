@@ -1,63 +1,59 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { createToken } from "@/lib/auth"
-
-// Mock user data - replace with actual MongoDB integration
-const MOCK_USERS = [
-  {
-    _id: "1",
-    email: "admin@example.com",
-    password: "password123", // In production, this would be hashed
-    name: "Admin User",
-    role: "admin" as const,
-  },
-  {
-    _id: "2",
-    email: "editor@example.com",
-    password: "password123",
-    name: "Editor User",
-    role: "editor" as const,
-  },
-]
+import { type NextRequest, NextResponse } from "next/server";
+import { createToken } from "@/lib/auth";
+import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    // Try to forward to NestJS first
+    try {
+      const nestResponse = await forwardToNestJS(request, "/auth/login");
 
-    if (!email || !password) {
-      return NextResponse.json({ message: "Email and password are required" }, { status: 400 })
+      // If NestJS returns a successful response, extract user data and generate our own token
+      if (nestResponse.ok) {
+        const nestData = await nestResponse.json();
+
+        // Extract user data from NestJS response
+        let user = nestData.user || nestData;
+
+        if (user) {
+          // Normalize user data - convert id to _id if needed
+          if (user.id && !user._id) {
+            user = { ...user, _id: user.id };
+            delete user.id;
+          }
+
+          // Create our own JWT token for frontend use
+          const token = await createToken(user);
+
+          const response = NextResponse.json({
+            user,
+            token,
+            message: nestData.message || "Login successful",
+          });
+
+          // Set HTTP-only cookie
+          response.cookies.set("auth-token", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict",
+            maxAge: 24 * 60 * 60, // 24 hours
+            path: "/",
+          });
+
+          return response;
+        }
+      }
+
+      // If NestJS response is not ok, return it as is
+      return nestResponse;
+    } catch (nestError) {
+      // NestJS not available, could add fallback authentication here
     }
-
-    // Find user - replace with MongoDB query
-    const user = MOCK_USERS.find((u) => u.email === email && u.password === password)
-
-    if (!user) {
-      return NextResponse.json({ message: "Invalid credentials" }, { status: 401 })
-    }
-
-    // Create JWT token
-    const token = await createToken(user)
-
-    // Return user data (without password) and token
-    const { password: _, ...userWithoutPassword } = user
-
-    const response = NextResponse.json({
-      user: userWithoutPassword,
-      token,
-      message: "Login successful",
-    })
-
-    // Set HTTP-only cookie
-    response.cookies.set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 24 * 60 * 60, // 24 hours
-      path: "/",
-    })
-
-    return response
   } catch (error) {
-    console.error("Login error:", error)
-    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
+    console.error("Login error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

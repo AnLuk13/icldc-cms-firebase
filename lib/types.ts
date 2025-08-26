@@ -11,7 +11,7 @@ export interface Project {
   status: "ongoing" | "completed" | "planned"
   startDate?: Date
   endDate?: Date
-  partners?: string[] // Partner IDs
+  partners?: Partner[] // Partner IDs
   documents?: string[] // Base64 encoded files/reports
   tags?: string[] // e.g., ["legal", "research"]
   createdAt?: Date
@@ -24,7 +24,7 @@ export interface Partner {
   description?: MultilingualText | string
   logo?: string // Base64 encoded image
   website?: string
-  projects?: string[] // Array of Project IDs they are involved in
+  projects?: Project[] // Array of Project IDs they are involved in
   createdAt?: Date
   updatedAt?: Date
 }
@@ -61,6 +61,7 @@ export interface News {
 
 export interface User {
   _id?: string
+  id?: string // For compatibility with NestJS response
   email: string
   password?: string // Hashed password
   name?: string

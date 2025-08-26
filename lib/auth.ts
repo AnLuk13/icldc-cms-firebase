@@ -6,8 +6,9 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "your-secr
 
 export async function createToken(user: User): Promise<string> {
   return await new SignJWT({
-    userId: user._id,
+    userId: user._id || user.id,
     email: user.email,
+    name: user.name,
     role: user.role,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -37,6 +38,7 @@ export async function getAuthUser(): Promise<User | null> {
   return {
     _id: payload.userId as string,
     email: payload.email as string,
+    name: payload.name as string,
     role: payload.role as "admin" | "editor",
   }
 }

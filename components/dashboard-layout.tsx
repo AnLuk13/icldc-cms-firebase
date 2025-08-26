@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAppStore } from "@/lib/store"
 import { Sidebar } from "./sidebar"
@@ -15,14 +15,21 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAuthenticated, sidebarOpen } = useAppStore()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    // Only redirect after component is mounted and we're sure about auth state
+    if (mounted && !isAuthenticated) {
       router.push("/login")
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router, mounted])
 
-  if (!isAuthenticated) {
+  // Don't render anything until mounted and authenticated
+  if (!mounted || !isAuthenticated) {
     return null
   }
 

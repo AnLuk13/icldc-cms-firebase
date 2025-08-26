@@ -1,19 +1,31 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { DashboardLayout } from "@/components/dashboard-layout"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Plus, Search, Calendar, User, FileText } from "lucide-react"
-import { NewsForm } from "@/components/news/news-form"
-import { NewsTable } from "@/components/news/news-table"
-import { newsApi } from "@/lib/api"
-import { useAppStore } from "@/lib/store"
-import { getLocalizedText } from "@/components/language-tabs"
-import type { News } from "@/lib/types"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useState, useEffect } from "react";
+import { DashboardLayout } from "@/components/dashboard-layout";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Search, Calendar, User, FileText } from "lucide-react";
+import { NewsForm } from "@/components/news/news-form";
+import { NewsTable } from "@/components/news/news-table";
+import { newsApi } from "@/lib/api";
+import { useAppStore } from "@/lib/store";
+import { getLocalizedText } from "@/components/language-tabs";
+import type { News } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,115 +35,125 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useToast } from "@/hooks/use-toast"
-import { isThisMonth, isThisWeek } from "date-fns"
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { isThisMonth, isThisWeek } from "date-fns";
 
 export default function NewsPage() {
-  const [news, setNews] = useState<News[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedNews, setSelectedNews] = useState<News | null>(null)
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [deleteNews, setDeleteNews] = useState<News | null>(null)
-  const { language } = useAppStore()
-  const { toast } = useToast()
+  const [news, setNews] = useState<News[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [deleteNews, setDeleteNews] = useState<News | null>(null);
+  const { language } = useAppStore();
+  const { toast } = useToast();
 
   useEffect(() => {
-    loadNews()
-  }, [])
+    loadNews();
+  }, []);
 
   const loadNews = async () => {
     try {
-      setLoading(true)
-      const data = await newsApi.getAll()
-      setNews(data)
+      setLoading(true);
+      const data = await newsApi.getAll();
+      setNews(data);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to load news",
         variant: "destructive",
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleCreateNews = () => {
-    setSelectedNews(null)
-    setIsFormOpen(true)
-  }
+    setSelectedNews(null);
+    setIsFormOpen(true);
+  };
 
   const handleEditNews = (newsItem: News) => {
-    setSelectedNews(newsItem)
-    setIsFormOpen(true)
-  }
+    setSelectedNews(newsItem);
+    setIsFormOpen(true);
+  };
 
   const handleDeleteNews = async (newsItem: News) => {
     try {
-      await newsApi.delete(newsItem._id!)
-      await loadNews()
-      setDeleteNews(null)
+      await newsApi.delete(newsItem._id!);
+      await loadNews();
+      setDeleteNews(null);
       toast({
         title: "Success",
         description: "News article deleted successfully",
-      })
+      });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to delete news article",
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const handleFormSubmit = async (newsData: Omit<News, "_id">) => {
     try {
       if (selectedNews) {
-        await newsApi.update(selectedNews._id!, newsData)
+        await newsApi.update(selectedNews._id!, newsData);
         toast({
           title: "Success",
           description: "News article updated successfully",
-        })
+        });
       } else {
-        await newsApi.create(newsData)
+        await newsApi.create(newsData);
         toast({
           title: "Success",
           description: "News article created successfully",
-        })
+        });
       }
-      await loadNews()
-      setIsFormOpen(false)
+      await loadNews();
+      setIsFormOpen(false);
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to ${selectedNews ? "update" : "create"} news article`,
+        description: `Failed to ${
+          selectedNews ? "update" : "create"
+        } news article`,
         variant: "destructive",
-      })
+      });
     }
-  }
+  };
 
   const filteredNews = news.filter((newsItem) => {
-    const name = getLocalizedText(newsItem.name, language).toLowerCase()
-    const content = getLocalizedText(newsItem.content, language).toLowerCase()
-    const summary = newsItem.summary ? getLocalizedText(newsItem.summary, language).toLowerCase() : ""
-    const author = newsItem.author?.toLowerCase() || ""
-    const category = newsItem.category?.toLowerCase() || ""
-    const search = searchTerm.toLowerCase()
+    const name = getLocalizedText(newsItem.name, language).toLowerCase();
+    const content = getLocalizedText(newsItem.content, language).toLowerCase();
+    const summary = newsItem.summary
+      ? getLocalizedText(newsItem.summary, language).toLowerCase()
+      : "";
+    const author = newsItem.author?.toLowerCase() || "";
+    const category = newsItem.category?.toLowerCase() || "";
+    const search = searchTerm.toLowerCase();
     return (
       name.includes(search) ||
       content.includes(search) ||
       summary.includes(search) ||
       author.includes(search) ||
       category.includes(search)
-    )
-  })
+    );
+  });
 
-  const publishedThisWeek = news.filter((item) => item.publishedAt && isThisWeek(new Date(item.publishedAt))).length
-  const publishedThisMonth = news.filter((item) => item.publishedAt && isThisMonth(new Date(item.publishedAt))).length
-  const draftArticles = news.filter((item) => !item.publishedAt).length
+  const publishedThisWeek = news.filter(
+    (item) => item.publishedAt && isThisWeek(new Date(item.publishedAt))
+  ).length;
+  const publishedThisMonth = news.filter(
+    (item) => item.publishedAt && isThisMonth(new Date(item.publishedAt))
+  ).length;
+  const draftArticles = news.filter((item) => !item.publishedAt).length;
 
-  const categories = [...new Set(news.map((item) => item.category).filter(Boolean))]
+  const categories = [
+    ...new Set(news.map((item) => item.category).filter(Boolean)),
+  ];
 
   return (
     <DashboardLayout>
@@ -140,7 +162,9 @@ export default function NewsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">News</h1>
-            <p className="text-muted-foreground">Manage your organization's news articles and announcements</p>
+            <p className="text-muted-foreground">
+              Manage your organization's news articles and announcements
+            </p>
           </div>
           <Button onClick={handleCreateNews} className="gap-2">
             <Plus className="h-4 w-4" />
@@ -152,7 +176,9 @@ export default function NewsPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Articles</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Articles
+              </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -167,7 +193,9 @@ export default function NewsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{publishedThisWeek}</div>
-              <p className="text-xs text-muted-foreground">Published recently</p>
+              <p className="text-xs text-muted-foreground">
+                Published recently
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -177,7 +205,9 @@ export default function NewsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{publishedThisMonth}</div>
-              <p className="text-xs text-muted-foreground">Monthly publications</p>
+              <p className="text-xs text-muted-foreground">
+                Monthly publications
+              </p>
             </CardContent>
           </Card>
           <Card>
@@ -187,7 +217,9 @@ export default function NewsPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{draftArticles}</div>
-              <p className="text-xs text-muted-foreground">Unpublished articles</p>
+              <p className="text-xs text-muted-foreground">
+                Unpublished articles
+              </p>
             </CardContent>
           </Card>
         </div>
@@ -197,17 +229,21 @@ export default function NewsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Categories</CardTitle>
-              <CardDescription>Article distribution by category</CardDescription>
+              <CardDescription>
+                Article distribution by category
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {categories.map((category) => {
-                  const count = news.filter((item) => item.category === category).length
+                  const count = news.filter(
+                    (item) => item.category === category
+                  ).length;
                   return (
                     <Badge key={category} variant="outline" className="gap-1">
                       {category} ({count})
                     </Badge>
-                  )
+                  );
                 })}
               </div>
             </CardContent>
@@ -218,7 +254,9 @@ export default function NewsPage() {
         <Card>
           <CardHeader>
             <CardTitle>All Articles</CardTitle>
-            <CardDescription>View and manage all your news articles</CardDescription>
+            <CardDescription>
+              View and manage all your news articles
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 mb-6">
@@ -246,23 +284,36 @@ export default function NewsPage() {
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedNews ? "Edit Article" : "Create New Article"}</DialogTitle>
+              <DialogTitle>
+                {selectedNews ? "Edit Article" : "Create New Article"}
+              </DialogTitle>
               <DialogDescription>
-                {selectedNews ? "Update article information" : "Add a new news article to your organization"}
+                {selectedNews
+                  ? "Update article information"
+                  : "Add a new news article to your organization"}
               </DialogDescription>
             </DialogHeader>
-            <NewsForm news={selectedNews} onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} />
+            <NewsForm
+              news={selectedNews}
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsFormOpen(false)}
+            />
           </DialogContent>
         </Dialog>
 
         {/* Delete Confirmation Dialog */}
-        <AlertDialog open={!!deleteNews} onOpenChange={() => setDeleteNews(null)}>
+        <AlertDialog
+          open={!!deleteNews}
+          onOpenChange={() => setDeleteNews(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the article "
-                {deleteNews && getLocalizedText(deleteNews.name, language)}" and all associated data.
+                This action cannot be undone. This will permanently delete the
+                article "
+                {deleteNews && getLocalizedText(deleteNews.name, language)}" and
+                all associated data.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -278,5 +329,5 @@ export default function NewsPage() {
         </AlertDialog>
       </div>
     </DashboardLayout>
-  )
+  );
 }
