@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { isThisMonth, isThisWeek } from "date-fns";
+import { useTranslations } from "next-intl";
 
 export default function NewsPage() {
   const [news, setNews] = useState<News[]>([]);
@@ -48,6 +49,7 @@ export default function NewsPage() {
   const [deleteNews, setDeleteNews] = useState<News | null>(null);
   const { language } = useAppStore();
   const { toast } = useToast();
+  const t = useTranslations();
 
   useEffect(() => {
     loadNews();
@@ -60,8 +62,8 @@ export default function NewsPage() {
       setNews(data);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load news",
+        title: t("common.error"),
+        description: t("news.errorLoadingNews"),
         variant: "destructive",
       });
     } finally {
@@ -85,13 +87,13 @@ export default function NewsPage() {
       await loadNews();
       setDeleteNews(null);
       toast({
-        title: "Success",
-        description: "News article deleted successfully",
+        title: t("common.success"),
+        description: t("news.newsDeletedSuccessfully"),
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete news article",
+        title: t("common.error"),
+        description: t("news.errorDeletingNews"),
         variant: "destructive",
       });
     }
@@ -102,24 +104,24 @@ export default function NewsPage() {
       if (selectedNews) {
         await newsApi.update(selectedNews._id!, newsData);
         toast({
-          title: "Success",
-          description: "News article updated successfully",
+          title: t("common.success"),
+          description: t("news.newsUpdatedSuccessfully"),
         });
       } else {
         await newsApi.create(newsData);
         toast({
-          title: "Success",
-          description: "News article created successfully",
+          title: t("common.success"),
+          description: t("news.newsCreatedSuccessfully"),
         });
       }
       await loadNews();
       setIsFormOpen(false);
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to ${
-          selectedNews ? "update" : "create"
-        } news article`,
+        title: t("common.error"),
+        description: t(
+          selectedNews ? "news.errorUpdatingNews" : "news.errorCreatingNews"
+        ),
         variant: "destructive",
       });
     }
@@ -161,14 +163,14 @@ export default function NewsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">News</h1>
-            <p className="text-muted-foreground">
-              Manage your organization's news articles and announcements
-            </p>
+            <h1 className="text-3xl font-bold text-foreground">
+              {t("news.title")}
+            </h1>
+            <p className="text-muted-foreground">{t("news.description")}</p>
           </div>
           <Button onClick={handleCreateNews} className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Article
+            {t("news.addNews")}
           </Button>
         </div>
 
@@ -177,48 +179,56 @@ export default function NewsPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
-                Total Articles
+                {t("news.totalArticles")}
               </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{news.length}</div>
-              <p className="text-xs text-muted-foreground">All articles</p>
+              <p className="text-xs text-muted-foreground">
+                {t("news.allArticles")}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Week</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("news.thisWeek")}
+              </CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{publishedThisWeek}</div>
               <p className="text-xs text-muted-foreground">
-                Published recently
+                {t("news.publishedRecently")}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("news.thisMonth")}
+              </CardTitle>
               <Badge variant="default">{publishedThisMonth}</Badge>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{publishedThisMonth}</div>
               <p className="text-xs text-muted-foreground">
-                Monthly publications
+                {t("news.monthlyPublications")}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Drafts</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {t("news.drafts")}
+              </CardTitle>
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{draftArticles}</div>
               <p className="text-xs text-muted-foreground">
-                Unpublished articles
+                {t("news.unpublishedArticles")}
               </p>
             </CardContent>
           </Card>
@@ -228,9 +238,9 @@ export default function NewsPage() {
         {categories.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Categories</CardTitle>
+              <CardTitle>{t("news.categories")}</CardTitle>
               <CardDescription>
-                Article distribution by category
+                {t("news.articleDistributionByCategory")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -253,17 +263,15 @@ export default function NewsPage() {
         {/* Search and Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>All Articles</CardTitle>
-            <CardDescription>
-              View and manage all your news articles
-            </CardDescription>
+            <CardTitle>{t("news.allNews")}</CardTitle>
+            <CardDescription>{t("news.viewAndManageNews")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search articles..."
+                  placeholder={t("news.searchNews")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -285,12 +293,12 @@ export default function NewsPage() {
           <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {selectedNews ? "Edit Article" : "Create New Article"}
+                {selectedNews ? t("news.editNews") : t("news.createNewNews")}
               </DialogTitle>
               <DialogDescription>
                 {selectedNews
-                  ? "Update article information"
-                  : "Add a new news article to your organization"}
+                  ? t("news.updateNewsInformation")
+                  : t("news.addNewNewsToOrganization")}
               </DialogDescription>
             </DialogHeader>
             <NewsForm
@@ -308,21 +316,22 @@ export default function NewsPage() {
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>{t("news.areYouSure")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the
-                article "
-                {deleteNews && getLocalizedText(deleteNews.name, language)}" and
-                all associated data.
+                {t("news.deleteConfirmation", {
+                  newsTitle: deleteNews
+                    ? getLocalizedText(deleteNews.name, language)
+                    : "",
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => deleteNews && handleDeleteNews(deleteNews)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete
+                {t("common.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

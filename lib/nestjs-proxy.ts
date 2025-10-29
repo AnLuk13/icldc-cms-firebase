@@ -1,30 +1,21 @@
 import { type NextRequest, NextResponse } from "next/server";
+import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 
-const NESTJS_API_URL = process.env.NESTJS_API_URL || "http://localhost:3001";
-
-export async function forwardToNestJS(
-  request: NextRequest,
-  path: string,
-  fallbackData?: any
-) {
+export async function forwardToNestJS(request: NextRequest, path: string) {
   try {
-    const url = `${NESTJS_API_URL}${path}`;
+    const url = `${process.env.NEXT_PUBLIC_NESTJS_API_URL}${path}`;
 
     // Get JWT token from HTTP-only cookie and add as Bearer token
     const token = request.cookies.get("auth-token")?.value;
 
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       // Always send Authorization header - use existing header, token from cookie, or empty Bearer
-      "Authorization": token ? `Bearer ${token}` : "Bearer ",
+      Authorization: token ? `Bearer ${token}` : "Bearer ",
     };
 
-    const options: RequestInit = {
-      method: request.method,
-      headers,
-    };
-
-    // Add body for non-GET requests
+    // Get request body for non-GET requests
+    let requestData: any = undefined;
     if (request.method !== "GET" && request.method !== "HEAD") {
       const body = await request.text();
       if (body) {
@@ -36,33 +27,54 @@ export async function forwardToNestJS(
             { status: 413 }
           );
         }
-        options.body = body;
+        
+        // Try to parse JSON, fallback to raw text
+        try {
+          requestData = JSON.parse(body);
+        } catch {
+          requestData = body;
+        }
       }
     }
 
-    const response = await fetch(url, options);
+    const axiosConfig: AxiosRequestConfig = {
+      method: request.method as any,
+      url,
+      headers,
+      data: requestData,
+      // Don't follow redirects automatically
+      maxRedirects: 0,
+    };
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json(
-        { error: errorText || "Request failed" },
-        { status: response.status }
-      );
-    }
+    const response = await axios.request(axiosConfig);
+    
+    // Return the response data
+    return NextResponse.json(response.data || { success: true });
 
-    const data = await response.json();
-    return NextResponse.json(data);
   } catch (error) {
     console.error("Error forwarding to NestJS:", error);
 
-    // Return fallback data if provided
-    if (fallbackData !== undefined) {
-      return NextResponse.json(fallbackData);
+    if (axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<any>;
+      
+      if (axiosError.response) {
+        // The request was made and the server responded with an error status
+        return NextResponse.json(
+          { error: axiosError.response.data?.message || axiosError.response.data || "Request failed" },
+          { status: axiosError.response.status }
+        );
+      } else if (axiosError.request) {
+        // The request was made but no response was received
+        return NextResponse.json(
+          { error: "NestJS backend is not available" },
+          { status: 503 }
+        );
+      }
     }
 
     return NextResponse.json(
-      { error: "Service temporarily unavailable" },
-      { status: 503 }
+      { error: "Internal server error" },
+      { status: 500 }
     );
   }
 }

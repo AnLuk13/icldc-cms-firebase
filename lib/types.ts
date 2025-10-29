@@ -61,7 +61,7 @@ export interface News {
 
 export interface User {
   _id?: string
-  id?: string // For compatibility with NestJS response
+  // id?: string // For compatibility with NestJS response // comment for now
   email: string
   password?: string // Hashed password
   name?: string
@@ -72,7 +72,6 @@ export interface User {
 
 export interface AuthState {
   user: User | null
-  token: string | null
   isAuthenticated: boolean
 }
 

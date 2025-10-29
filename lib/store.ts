@@ -7,7 +7,7 @@ interface AppState extends AuthState {
   sidebarOpen: boolean;
 
   // Auth actions
-  login: (user: User, token: string) => void;
+  login: (user: User) => void;
   logout: () => void;
   setUser: (user: User | null) => void;
 
@@ -22,25 +22,17 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       // Initial state
       user: null,
-      token: null,
       isAuthenticated: false,
       language: "en",
       sidebarOpen: true,
 
       // Auth actions
-      login: (user, token) => {
-        set({ user, token, isAuthenticated: true });
-        // Set HTTP-only cookie
-        document.cookie = `auth-token=${token}; path=/; max-age=${
-          24 * 60 * 60
-        }; samesite=strict`;
+      login: (user) => {
+        set({ user, isAuthenticated: true });
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false });
-        // Clear cookie
-        document.cookie =
-          "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+        set({ user: null, isAuthenticated: false });
       },
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
@@ -55,9 +47,8 @@ export const useAppStore = create<AppState>()(
       name: "cms-app-storage",
       partialize: (state) => ({
         user: state.user,
-        token: state.token,
         isAuthenticated: state.isAuthenticated,
-        language: state.language,
+        language: state.language, // to be removed
         sidebarOpen: state.sidebarOpen,
       }),
     }

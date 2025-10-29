@@ -8,6 +8,7 @@ import { useAppStore } from "@/lib/store"
 import { getLocalizedText } from "@/components/language-tabs"
 import type { News } from "@/lib/types"
 import { format } from "date-fns"
+import { useTranslations } from 'next-intl'
 
 interface NewsTableProps {
   news: News[]
@@ -18,6 +19,8 @@ interface NewsTableProps {
 
 export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
   const { language } = useAppStore()
+  const t = useTranslations('news.table')
+  const tCommon = useTranslations('common')
 
   if (loading) {
     return (
@@ -32,7 +35,7 @@ export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
   if (news.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-muted-foreground">No news articles found</p>
+        <p className="text-muted-foreground">{t('noNews')}</p>
       </div>
     )
   }
@@ -42,13 +45,13 @@ export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Article</TableHead>
-            <TableHead>Author</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Published</TableHead>
-            <TableHead>Media</TableHead>
-            <TableHead>Tags</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('article')}</TableHead>
+            <TableHead>{t('author')}</TableHead>
+            <TableHead>{t('category')}</TableHead>
+            <TableHead>{t('published')}</TableHead>
+            <TableHead>{t('media')}</TableHead>
+            <TableHead>{t('tags')}</TableHead>
+            <TableHead className="text-right">{t('actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -67,14 +70,14 @@ export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
               <TableCell>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <User className="h-3 w-3" />
-                  <span className="truncate max-w-24">{newsItem.author || "Unknown"}</span>
+                  <span className="truncate max-w-24">{newsItem.author || t('unknown')}</span>
                 </div>
               </TableCell>
               <TableCell>
                 {newsItem.category ? (
                   <Badge variant="outline">{newsItem.category}</Badge>
                 ) : (
-                  <span className="text-sm text-muted-foreground">No category</span>
+                  <span className="text-sm text-muted-foreground">{t('noCategory')}</span>
                 )}
               </TableCell>
               <TableCell>
@@ -87,7 +90,7 @@ export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
                       <span className="text-xs">{format(new Date(newsItem.publishedAt), "HH:mm")}</span>
                     </div>
                   ) : (
-                    <Badge variant="secondary">Draft</Badge>
+                    <Badge variant="secondary">{t('draft')}</Badge>
                   )}
                 </div>
               </TableCell>

@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import { useTranslations } from "next-intl"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAppStore } from "@/lib/store"
@@ -11,14 +12,15 @@ interface LanguageTabsProps {
   defaultLanguage?: Language
 }
 
-const languages: { code: Language; name: string; flag: string }[] = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "ro", name: "Română", flag: "🇷🇴" },
-  { code: "ru", name: "Русский", flag: "🇷🇺" },
+const languages: { code: Language; nameKey: string; flag: string }[] = [
+  { code: "en", nameKey: "english", flag: "🇺🇸" },
+  { code: "ro", nameKey: "romanian", flag: "🇷🇴" },
+  { code: "ru", nameKey: "russian", flag: "🇷🇺" },
 ]
 
 export function LanguageTabs({ children, defaultLanguage }: LanguageTabsProps) {
   const { language } = useAppStore()
+  const t = useTranslations("language")
   const activeLanguage = defaultLanguage || language
 
   return (
@@ -27,7 +29,7 @@ export function LanguageTabs({ children, defaultLanguage }: LanguageTabsProps) {
         {languages.map((lang) => (
           <TabsTrigger key={lang.code} value={lang.code} className="gap-2">
             <span>{lang.flag}</span>
-            <span className="hidden sm:inline">{lang.name}</span>
+            <span className="hidden sm:inline">{t(lang.nameKey)}</span>
           </TabsTrigger>
         ))}
       </TabsList>

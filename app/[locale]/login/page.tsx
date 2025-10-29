@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "@/i18n/routing";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAppStore } from "@/lib/store";
 import { authApi, ApiError } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 interface LoginForm {
   email: string;
@@ -26,7 +27,15 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  const login = useAppStore((state) => state.login);
+  const { login, isAuthenticated } = useAppStore();
+  const t = useTranslations();
+
+  // Redirect to dashboard if user is already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
 
   const {
     register,
@@ -41,7 +50,7 @@ export default function LoginPage() {
     try {
       const result = await authApi.login(data);
 
-      login(result.user, result.token);
+      login(result.user);
 
       router.push("/");
     } catch (err) {
@@ -49,7 +58,7 @@ export default function LoginPage() {
       if (err instanceof ApiError) {
         setError(err.message);
       } else {
-        setError(err instanceof Error ? err.message : "Login failed");
+        setError(err instanceof Error ? err.message : t("auth.loginError"));
       }
     } finally {
       setIsLoading(false);
@@ -60,24 +69,24 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">CMS Login</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the content management system
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            {t("auth.title")}
+          </CardTitle>
+          <CardDescription>{t("auth.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 {...register("email", {
-                  required: "Email is required",
+                  required: t("auth.emailRequired"),
                   pattern: {
                     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: "Invalid email address",
+                    message: t("auth.invalidEmail"),
                   },
                 })}
               />
@@ -89,16 +98,16 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t("auth.passwordPlaceholder")}
                 {...register("password", {
-                  required: "Password is required",
+                  required: t("auth.passwordRequired"),
                   minLength: {
                     value: 6,
-                    message: "Password must be at least 6 characters",
+                    message: t("auth.passwordMinLength"),
                   },
                 })}
               />
@@ -116,7 +125,7 @@ export default function LoginPage() {
             )}
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? t("auth.signingIn") : t("auth.loginButton")}
             </Button>
           </form>
         </CardContent>

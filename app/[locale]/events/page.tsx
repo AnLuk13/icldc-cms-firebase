@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { isAfter, isBefore, startOfDay } from "date-fns"
+import { useTranslations } from 'next-intl'
 
 export default function EventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -36,6 +37,7 @@ export default function EventsPage() {
   const [deleteEvent, setDeleteEvent] = useState<Event | null>(null)
   const { language } = useAppStore()
   const { toast } = useToast()
+  const t = useTranslations()
 
   useEffect(() => {
     loadEvents()
@@ -48,8 +50,8 @@ export default function EventsPage() {
       setEvents(data)
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load events",
+        title: t("common.error"),
+        description: t("events.errorLoadingEvents"),
         variant: "destructive",
       })
     } finally {
@@ -73,13 +75,13 @@ export default function EventsPage() {
       await loadEvents()
       setDeleteEvent(null)
       toast({
-        title: "Success",
-        description: "Event deleted successfully",
+        title: t("common.success"),
+        description: t("events.eventDeletedSuccessfully"),
       })
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete event",
+        title: t("common.error"),
+        description: t("events.errorDeletingEvent"),
         variant: "destructive",
       })
     }
@@ -90,22 +92,22 @@ export default function EventsPage() {
       if (selectedEvent) {
         await eventsApi.update(selectedEvent._id!, eventData)
         toast({
-          title: "Success",
-          description: "Event updated successfully",
+          title: t("common.success"),
+          description: t("events.eventUpdatedSuccessfully"),
         })
       } else {
         await eventsApi.create(eventData)
         toast({
-          title: "Success",
-          description: "Event created successfully",
+          title: t("common.success"),
+          description: t("events.eventCreatedSuccessfully"),
         })
       }
       await loadEvents()
       setIsFormOpen(false)
     } catch (error) {
       toast({
-        title: "Error",
-        description: `Failed to ${selectedEvent ? "update" : "create"} event`,
+        title: t("common.error"),
+        description: t(selectedEvent ? "events.errorUpdatingEvent" : "events.errorCreatingEvent"),
         variant: "destructive",
       })
     }
@@ -136,12 +138,12 @@ export default function EventsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Events</h1>
-            <p className="text-muted-foreground">Manage your organization's events and activities</p>
+            <h1 className="text-3xl font-bold text-foreground">{t("events.title")}</h1>
+            <p className="text-muted-foreground">{t("events.description")}</p>
           </div>
           <Button onClick={handleCreateEvent} className="gap-2">
             <Plus className="h-4 w-4" />
-            Add Event
+            {t("events.addEvent")}
           </Button>
         </div>
 
@@ -149,32 +151,32 @@ export default function EventsPage() {
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Upcoming Events</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("events.upcomingEvents")}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{upcomingEvents.length}</div>
-              <p className="text-xs text-muted-foreground">Scheduled for future</p>
+              <p className="text-xs text-muted-foreground">{t("events.scheduledForFuture")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Ongoing Events</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("events.ongoingEvents")}</CardTitle>
               <Badge variant="default">{ongoingEvents.length}</Badge>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{ongoingEvents.length}</div>
-              <p className="text-xs text-muted-foreground">Currently active</p>
+              <p className="text-xs text-muted-foreground">{t("events.currentlyActive")}</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Past Events</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("events.pastEvents")}</CardTitle>
               <Badge variant="secondary">{pastEvents.length}</Badge>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pastEvents.length}</div>
-              <p className="text-xs text-muted-foreground">Completed events</p>
+              <p className="text-xs text-muted-foreground">{t("events.completedEvents")}</p>
             </CardContent>
           </Card>
         </div>
@@ -182,15 +184,15 @@ export default function EventsPage() {
         {/* Search and Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>All Events</CardTitle>
-            <CardDescription>View and manage all your events</CardDescription>
+            <CardTitle>{t("events.allEvents")}</CardTitle>
+            <CardDescription>{t("events.viewAndManageEvents")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-4 mb-6">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search events..."
+                  placeholder={t("events.searchEvents")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -211,9 +213,9 @@ export default function EventsPage() {
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{selectedEvent ? "Edit Event" : "Create New Event"}</DialogTitle>
+              <DialogTitle>{selectedEvent ? t("events.editEvent") : t("events.createNewEvent")}</DialogTitle>
               <DialogDescription>
-                {selectedEvent ? "Update event information" : "Add a new event to your organization"}
+                {selectedEvent ? t("events.updateEventInformation") : t("events.addNewEventToOrganization")}
               </DialogDescription>
             </DialogHeader>
             <EventForm event={selectedEvent} onSubmit={handleFormSubmit} onCancel={() => setIsFormOpen(false)} />
@@ -224,19 +226,20 @@ export default function EventsPage() {
         <AlertDialog open={!!deleteEvent} onOpenChange={() => setDeleteEvent(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogTitle>{t("events.areYouSure")}</AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the event "
-                {deleteEvent && getLocalizedText(deleteEvent.name, language)}" and all associated data.
+                {t("events.deleteConfirmation", { 
+                  eventName: deleteEvent ? getLocalizedText(deleteEvent.name, language) : ""
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => deleteEvent && handleDeleteEvent(deleteEvent)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                Delete
+                {t("common.delete")}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

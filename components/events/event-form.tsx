@@ -1,40 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { useForm } from "react-hook-form"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { X, ImageIcon } from "lucide-react"
-import { LanguageTabs, createEmptyMultilingualText } from "@/components/language-tabs"
-import { convertFileToBase64 } from "@/lib/api"
-import type { Event, Language, MultilingualText } from "@/lib/types"
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { X, ImageIcon } from "lucide-react";
+import {
+  LanguageTabs,
+  createEmptyMultilingualText,
+} from "@/components/language-tabs";
+import { convertFileToBase64 } from "@/lib/api";
+import type { Event, Language, MultilingualText } from "@/lib/types";
+import { useTranslations } from "next-intl";
 
 interface EventFormProps {
-  event?: Event | null
-  onSubmit: (data: Omit<Event, "_id">) => void
-  onCancel: () => void
+  event?: Event | null;
+  onSubmit: (data: Omit<Event, "_id">) => void;
+  onCancel: () => void;
 }
 
 interface FormData {
-  name: MultilingualText
-  description: MultilingualText
-  location: string
-  startDate: string
-  endDate: string
-  organizer: string
-  registrationLink: string
-  bannerImage: string
-  tags: string[]
+  name: MultilingualText;
+  description: MultilingualText;
+  location: string;
+  startDate: string;
+  endDate: string;
+  organizer: string;
+  registrationLink: string;
+  bannerImage: string;
+  tags: string[];
 }
 
 export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
-  const [tagInput, setTagInput] = useState("")
-  const [uploading, setUploading] = useState(false)
+  const [tagInput, setTagInput] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const t = useTranslations("events.form");
+  const tCommon = useTranslations("common");
 
   const {
     register,
@@ -55,50 +61,56 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           : event.description
         : createEmptyMultilingualText(),
       location: event?.location || "",
-      startDate: event?.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : "",
-      endDate: event?.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
+      startDate: event?.startDate
+        ? new Date(event.startDate).toISOString().slice(0, 16)
+        : "",
+      endDate: event?.endDate
+        ? new Date(event.endDate).toISOString().slice(0, 16)
+        : "",
       organizer: event?.organizer || "",
       registrationLink: event?.registrationLink || "",
       bannerImage: event?.bannerImage || "",
       tags: event?.tags || [],
     },
-  })
+  });
 
-  const watchedTags = watch("tags")
-  const watchedBannerImage = watch("bannerImage")
+  const watchedTags = watch("tags");
+  const watchedBannerImage = watch("bannerImage");
 
   const handleAddTag = () => {
     if (tagInput.trim() && !watchedTags.includes(tagInput.trim())) {
-      setValue("tags", [...watchedTags, tagInput.trim()])
-      setTagInput("")
+      setValue("tags", [...watchedTags, tagInput.trim()]);
+      setTagInput("");
     }
-  }
+  };
 
   const handleRemoveTag = (tagToRemove: string) => {
     setValue(
       "tags",
-      watchedTags.filter((tag) => tag !== tagToRemove),
-    )
-  }
+      watchedTags.filter((tag) => tag !== tagToRemove)
+    );
+  };
 
-  const handleBannerUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleBannerUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    setUploading(true)
+    setUploading(true);
     try {
-      const base64 = await convertFileToBase64(file)
-      setValue("bannerImage", base64)
+      const base64 = await convertFileToBase64(file);
+      setValue("bannerImage", base64);
     } catch (error) {
-      console.error("Banner upload error:", error)
+      console.error("Banner upload error:", error);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const handleRemoveBanner = () => {
-    setValue("bannerImage", "")
-  }
+    setValue("bannerImage", "");
+  };
 
   const onFormSubmit = (data: FormData) => {
     const eventData: Omit<Event, "_id"> = {
@@ -109,25 +121,33 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
       organizer: data.organizer || undefined,
       registrationLink: data.registrationLink || undefined,
       bannerImage: data.bannerImage || undefined,
-    }
-    onSubmit(eventData)
-  }
+    };
+    onSubmit(eventData);
+  };
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       {/* Event Name */}
       <div className="space-y-2">
-        <Label>Event Name *</Label>
+        <Label>
+          {t("eventName")} {tCommon("required")}
+        </Label>
         <LanguageTabs>
           {(language: Language) => (
             <div className="space-y-2">
               <Input
-                placeholder={`Enter event name in ${language.toUpperCase()}`}
+                placeholder={t("eventNamePlaceholder", {
+                  language: language.toUpperCase(),
+                })}
                 {...register(`name.${language}`, {
-                  required: language === "en" ? "English name is required" : false,
+                  required: language === "en" ? t("eventNameRequired") : false,
                 })}
               />
-              {errors.name?.[language] && <p className="text-sm text-destructive">{errors.name[language]?.message}</p>}
+              {errors.name?.[language] && (
+                <p className="text-sm text-destructive">
+                  {errors.name[language]?.message}
+                </p>
+              )}
             </div>
           )}
         </LanguageTabs>
@@ -135,12 +155,14 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
       {/* Event Description */}
       <div className="space-y-2">
-        <Label>Description</Label>
+        <Label>{t("description")}</Label>
         <LanguageTabs>
           {(language: Language) => (
             <div className="space-y-2">
               <Textarea
-                placeholder={`Enter event description in ${language.toUpperCase()}`}
+                placeholder={t("descriptionPlaceholder", {
+                  language: language.toUpperCase(),
+                })}
                 rows={4}
                 {...register(`description.${language}`)}
               />
@@ -152,60 +174,76 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
       {/* Location and Organizer */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Location</Label>
-          <Input placeholder="Event location or 'Online'" {...register("location")} />
+          <Label>{t("location")}</Label>
+          <Input
+            placeholder={t("locationPlaceholder")}
+            {...register("location")}
+          />
         </div>
 
         <div className="space-y-2">
-          <Label>Organizer</Label>
-          <Input placeholder="Event organizer" {...register("organizer")} />
+          <Label>{t("organizer")}</Label>
+          <Input
+            placeholder={t("organizerPlaceholder")}
+            {...register("organizer")}
+          />
         </div>
       </div>
 
       {/* Dates */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Start Date & Time *</Label>
+          <Label>
+            {t("startDate")} {tCommon("required")}
+          </Label>
           <Input
             type="datetime-local"
             {...register("startDate", {
-              required: "Start date is required",
+              required: t("startDateRequired"),
             })}
           />
-          {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
+          {errors.startDate && (
+            <p className="text-sm text-destructive">
+              {errors.startDate.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label>End Date & Time</Label>
+          <Label>{t("endDate")}</Label>
           <Input type="datetime-local" {...register("endDate")} />
         </div>
       </div>
 
       {/* Registration Link */}
       <div className="space-y-2">
-        <Label>Registration Link</Label>
+        <Label>{t("registrationLink")}</Label>
         <Input
           type="url"
-          placeholder="https://example.com/register"
+          placeholder={t("registrationPlaceholder")}
           {...register("registrationLink", {
             pattern: {
               value: /^https?:\/\/.+/,
-              message: "Please enter a valid URL starting with http:// or https://",
+              message: tCommon("validUrl"),
             },
           })}
         />
-        {errors.registrationLink && <p className="text-sm text-destructive">{errors.registrationLink.message}</p>}
+        {errors.registrationLink && (
+          <p className="text-sm text-destructive">
+            {errors.registrationLink.message}
+          </p>
+        )}
       </div>
 
       {/* Banner Image */}
       <div className="space-y-2">
-        <Label>Banner Image</Label>
+        <Label>{t("bannerImage")}</Label>
         {watchedBannerImage ? (
           <div className="space-y-2">
             <div className="relative">
               <img
                 src={watchedBannerImage || "/placeholder.svg"}
-                alt="Event banner"
+                alt={t("bannerImageAlt")}
                 className="w-full h-48 object-cover rounded-lg border"
               />
               <Button
@@ -221,11 +259,20 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           </div>
         ) : (
           <div className="border-2 border-dashed border-border rounded-lg p-4">
-            <input type="file" accept="image/*" onChange={handleBannerUpload} className="hidden" id="banner-upload" />
-            <label htmlFor="banner-upload" className="flex flex-col items-center justify-center cursor-pointer">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleBannerUpload}
+              className="hidden"
+              id="banner-upload"
+            />
+            <label
+              htmlFor="banner-upload"
+              className="flex flex-col items-center justify-center cursor-pointer"
+            >
               <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
-                {uploading ? "Uploading..." : "Click to upload banner image"}
+                {uploading ? tCommon("uploading") : t("bannerUploadText")}
               </p>
             </label>
           </div>
@@ -234,23 +281,29 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
       {/* Tags */}
       <div className="space-y-2">
-        <Label>Tags</Label>
+        <Label>{t("tags")}</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="Add a tag"
+            placeholder={t("tagPlaceholder")}
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
+            onKeyPress={(e) =>
+              e.key === "Enter" && (e.preventDefault(), handleAddTag())
+            }
           />
           <Button type="button" onClick={handleAddTag} variant="outline">
-            Add
+            {tCommon("add")}
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
           {watchedTags.map((tag) => (
             <Badge key={tag} variant="secondary" className="gap-1">
               {tag}
-              <button type="button" onClick={() => handleRemoveTag(tag)} className="hover:text-destructive">
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                className="hover:text-destructive"
+              >
                 <X className="h-3 w-3" />
               </button>
             </Badge>
@@ -261,12 +314,16 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
       {/* Form Actions */}
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" disabled={isSubmitting || uploading}>
-          {isSubmitting ? "Saving..." : event ? "Update Event" : "Create Event"}
+          {isSubmitting
+            ? tCommon("saving")
+            : event
+            ? t("updateEvent")
+            : t("createEvent")}
         </Button>
       </div>
     </form>
-  )
+  );
 }

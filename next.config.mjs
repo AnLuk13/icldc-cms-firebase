@@ -1,3 +1,7 @@
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
@@ -6,9 +10,21 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // images: {
+  //   domains: ["flagcdn.com"],
+  //   unoptimized: true,
+  // },
   images: {
-    unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "flagcdn.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+    formats: ["image/avif", "image/webp"], // ✅ Use modern formats for better performance
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

@@ -17,6 +17,7 @@ import {
 } from "@/components/language-tabs";
 import { convertFileToBase64 } from "@/lib/api";
 import type { News, Language, MultilingualText } from "@/lib/types";
+import { useTranslations } from "next-intl";
 
 interface NewsFormProps {
   news?: News | null;
@@ -39,6 +40,8 @@ interface FormData {
 export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   const [tagInput, setTagInput] = useState("");
   const [uploading, setUploading] = useState(false);
+  const t = useTranslations("news.form");
+  const tCommon = useTranslations("common");
 
   const {
     register,
@@ -100,7 +103,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
     // Check file size (max 5MB for banner images)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Banner image must be smaller than 5MB");
+      alert(t("bannerSizeError"));
       return;
     }
 
@@ -110,7 +113,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       setValue("bannerImage", base64);
     } catch (error) {
       console.error("Banner upload error:", error);
-      alert("Failed to upload banner image");
+      alert(t("bannerUploadError"));
     } finally {
       setUploading(false);
     }
@@ -131,7 +134,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       (file) => file.size > 2 * 1024 * 1024
     );
     if (oversizedFiles.length > 0) {
-      alert("Each document must be smaller than 2MB");
+      alert(t("documentsSizeError"));
       return;
     }
 
@@ -142,7 +145,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       0
     );
     if (totalExistingSize + newFilesSize > 8 * 1024 * 1024) {
-      alert("Total documents size would exceed 8MB limit");
+      alert(t("documentsTotalSizeError"));
       return;
     }
 
@@ -157,7 +160,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       setValue("documents", [...watchedDocuments, ...base64Files]);
     } catch (error) {
       console.error("Document upload error:", error);
-      alert("Failed to upload documents");
+      alert(t("documentsUploadError"));
     } finally {
       setUploading(false);
     }
@@ -193,15 +196,18 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       {/* Article Title */}
       <div className="space-y-2">
-        <Label>Article Title *</Label>
+        <Label>
+          {t("articleTitle")} {tCommon("required")}
+        </Label>
         <LanguageTabs>
           {(language: Language) => (
             <div className="space-y-2">
               <Input
-                placeholder={`Enter article title in ${language.toUpperCase()}`}
+                placeholder={t("titlePlaceholder", {
+                  language: language.toUpperCase(),
+                })}
                 {...register(`name.${language}`, {
-                  required:
-                    language === "en" ? "English title is required" : false,
+                  required: language === "en" ? t("titleRequired") : false,
                 })}
               />
               {errors.name?.[language] && (
@@ -216,12 +222,14 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
       {/* Article Summary */}
       <div className="space-y-2">
-        <Label>Summary (optional)</Label>
+        <Label>{t("summary")}</Label>
         <LanguageTabs>
           {(language: Language) => (
             <div className="space-y-2">
               <Textarea
-                placeholder={`Enter article summary in ${language.toUpperCase()} (optional)`}
+                placeholder={t("summaryPlaceholder", {
+                  language: language.toUpperCase(),
+                })}
                 rows={3}
                 {...register(`summary.${language}`)}
               />
@@ -232,16 +240,19 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
       {/* Article Content */}
       <div className="space-y-2">
-        <Label>Content *</Label>
+        <Label>
+          {t("content")} {tCommon("required")}
+        </Label>
         <LanguageTabs>
           {(language: Language) => (
             <div className="space-y-2">
               <Textarea
-                placeholder={`Enter article content in ${language.toUpperCase()}`}
+                placeholder={t("contentPlaceholder", {
+                  language: language.toUpperCase(),
+                })}
                 rows={8}
                 {...register(`content.${language}`, {
-                  required:
-                    language === "en" ? "English content is required" : false,
+                  required: language === "en" ? t("contentRequired") : false,
                 })}
               />
               {errors.content?.[language] && (
@@ -257,14 +268,14 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       {/* Author and Category */}
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label>Author (optional)</Label>
-          <Input placeholder="Article author" {...register("author")} />
+          <Label>{t("author")}</Label>
+          <Input placeholder={t("authorPlaceholder")} {...register("author")} />
         </div>
 
         <div className="space-y-2">
-          <Label>Category (optional)</Label>
+          <Label>{t("category")}</Label>
           <Input
-            placeholder="Article category (e.g., Research, Updates, Events)"
+            placeholder={t("categoryPlaceholder")}
             {...register("category")}
           />
         </div>
@@ -272,13 +283,13 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
       {/* Banner Image */}
       <div className="space-y-2">
-        <Label>Banner Image</Label>
+        <Label>{t("bannerImage")}</Label>
         {watchedBannerImage ? (
           <div className="space-y-2">
             <div className="relative">
               <img
                 src={watchedBannerImage || "/placeholder.svg"}
-                alt="Article banner"
+                alt={t("bannerImageAlt")}
                 className="w-full h-48 object-cover rounded-lg border"
               />
               <Button
@@ -307,12 +318,10 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
             >
               <ImageIcon className="h-8 w-8 text-muted-foreground mb-2" />
               <p className="text-sm text-muted-foreground">
-                {uploading
-                  ? "Uploading..."
-                  : "Click to upload banner image (optional)"}
+                {uploading ? tCommon("uploading") : t("bannerUploadText")}
               </p>
               <p className="text-xs text-muted-foreground mt-1">
-                Max size: 5MB
+                {t("bannerMaxSize")}
               </p>
             </label>
           </div>
@@ -321,7 +330,9 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
       {/* Documents */}
       <div className="space-y-2">
-        <Label>Documents *</Label>
+        <Label>
+          {t("documents")} {tCommon("required")}
+        </Label>
         <div className="border-2 border-dashed border-border rounded-lg p-4">
           <input
             type="file"
@@ -337,10 +348,10 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
           >
             <Upload className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">
-              {uploading ? "Uploading..." : "Click to upload documents"}
+              {uploading ? tCommon("uploading") : t("documentsUploadText")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Max 2MB per file, 8MB total
+              {t("documentsMaxSize")}
             </p>
           </label>
         </div>
@@ -353,7 +364,9 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
               >
                 <div className="flex items-center gap-2">
                   <File className="h-4 w-4" />
-                  <span className="text-sm">Document {index + 1}</span>
+                  <span className="text-sm">
+                    {t("documentNumber", { number: index + 1 })}
+                  </span>
                 </div>
                 <Button
                   type="button"
@@ -367,18 +380,15 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
             ))}
           </div>
         )}
-        <p className="text-xs text-muted-foreground">
-          Note: At least one document is required. You can add multiple
-          documents.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("documentsNote")}</p>
       </div>
 
       {/* Tags */}
       <div className="space-y-2">
-        <Label>Tags (optional)</Label>
+        <Label>{t("tags")}</Label>
         <div className="flex gap-2">
           <Input
-            placeholder="Add a tag"
+            placeholder={t("tagPlaceholder")}
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyPress={(e) =>
@@ -386,7 +396,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
             }
           />
           <Button type="button" onClick={handleAddTag} variant="outline">
-            Add
+            {tCommon("add")}
           </Button>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -407,28 +417,26 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
       {/* Publishing Date */}
       <div className="space-y-2">
-        <Label>Publish Date (optional)</Label>
+        <Label>{t("publishDate")}</Label>
         <Input
           type="datetime-local"
           {...register("publishedAt")}
-          placeholder="Leave empty to save as draft"
+          placeholder={t("publishDatePlaceholder")}
         />
-        <p className="text-xs text-muted-foreground">
-          Set a date to schedule publication, or leave empty to save as draft
-        </p>
+        <p className="text-xs text-muted-foreground">{t("publishDateNote")}</p>
       </div>
 
       {/* Form Actions */}
       <div className="flex justify-end gap-3">
         <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
+          {tCommon("cancel")}
         </Button>
         <Button type="submit" disabled={isSubmitting || uploading}>
           {isSubmitting
-            ? "Saving..."
+            ? tCommon("saving")
             : news
-            ? "Update Article"
-            : "Create Article"}
+            ? t("updateArticle")
+            : t("createArticle")}
         </Button>
       </div>
     </form>

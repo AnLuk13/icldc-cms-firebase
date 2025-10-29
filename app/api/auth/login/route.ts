@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { createToken } from "@/lib/auth";
+// import { createToken } from "@/lib/auth";
 import { forwardToNestJS } from "@/lib/nestjs-proxy";
 
 export async function POST(request: NextRequest) {
@@ -23,16 +23,16 @@ export async function POST(request: NextRequest) {
           }
 
           // Create our own JWT token for frontend use
-          const token = await createToken(user);
+          // const token = await createToken(user);
 
           const response = NextResponse.json({
             user,
-            token,
+            token: nestData.access_token,
             message: nestData.message || "Login successful",
           });
 
           // Set HTTP-only cookie
-          response.cookies.set("auth-token", token, {
+          response.cookies.set("auth-token", nestData.access_token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",

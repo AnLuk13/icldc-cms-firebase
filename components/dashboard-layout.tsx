@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter } from "@/i18n/routing"
 import { useAppStore } from "@/lib/store"
 import { Sidebar } from "./sidebar"
 import { Header } from "./header"
