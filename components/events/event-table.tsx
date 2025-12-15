@@ -22,7 +22,7 @@ import { useAppStore } from "@/lib/store";
 import { getLocalizedText } from "@/components/language-tabs";
 import type { Event } from "@/lib/types";
 import { format, isAfter, isBefore, startOfDay } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface EventTableProps {
   events: Event[];
@@ -65,7 +65,7 @@ export function EventTable({
   onEdit,
   onDelete,
 }: EventTableProps) {
-  const { language } = useAppStore();
+  const language = useLocale();
   const t = useTranslations("events.table");
   const tCommon = useTranslations("common");
 

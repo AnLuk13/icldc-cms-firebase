@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
           const response = NextResponse.json({
             user,
-            token: nestData.access_token,
+            // token: nestData.access_token,
             message: nestData.message || "Login successful",
           });
 

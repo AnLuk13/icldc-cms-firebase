@@ -4,7 +4,7 @@ import type React from "react";
 
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +60,7 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
   const [uploading, setUploading] = useState(false);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loadingPartners, setLoadingPartners] = useState(true);
-  const { language } = useAppStore();
+  const language = useLocale();
 
   const {
     register,

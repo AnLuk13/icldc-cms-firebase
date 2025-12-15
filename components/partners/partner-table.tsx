@@ -15,7 +15,7 @@ import { Edit, Trash2, ExternalLink, FolderOpen } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { getLocalizedText } from "@/components/language-tabs";
 import type { Partner } from "@/lib/types";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface PartnerTableProps {
   partners: Partner[];
@@ -30,7 +30,7 @@ export function PartnerTable({
   onEdit,
   onDelete,
 }: PartnerTableProps) {
-  const { language } = useAppStore();
+  const language = useLocale();
   const t = useTranslations("partners.table");
 
   if (loading) {

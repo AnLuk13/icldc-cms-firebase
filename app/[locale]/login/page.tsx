@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAppStore } from "@/lib/store";
 import { authApi, ApiError } from "@/lib/api";
 import { useTranslations } from "next-intl";
+import { toast } from "@/hooks/use-toast";
 
 interface LoginForm {
   email: string;
@@ -48,11 +49,15 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const result = await authApi.login(data);
-
-      login(result.user);
-
-      router.push("/");
+      await authApi.login(data).then((res) => {
+        login(res.user);
+        toast({
+          // title: t("auth.loginSuccess"),
+          // description: t("auth.loginSuccessDescription"),
+          title: "Success",
+        });
+        router.push("/");
+      });
     } catch (err) {
       console.error("Login error:", err);
       if (err instanceof ApiError) {

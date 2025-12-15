@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function PartnersPage() {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -46,7 +46,7 @@ export default function PartnersPage() {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deletePartner, setDeletePartner] = useState<Partner | null>(null);
-  const { language } = useAppStore();
+  const language = useLocale();
   const { toast } = useToast();
   const t = useTranslations();
 

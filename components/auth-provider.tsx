@@ -11,13 +11,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     // Check if user is already authenticated via cookie
     const checkAuth = async () => {
       try {
-        // Make a request to a protected endpoint to verify authentication
-        const response = await axios.get("/api/auth/me", {
-          withCredentials: true,
-        });
+        const response = await axios.get("/api/auth/me");
 
         if (response.data?.user) {
           setUser(response.data.user);
@@ -32,7 +30,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Always check auth on mount, regardless of current state
     checkAuth();
-  }, [setUser]);
+  }, [isAuthenticated]);
+
+  console.log("isAuthenticated:", isAuthenticated);
 
   // Show loading state while checking authentication
   if (isLoading) {

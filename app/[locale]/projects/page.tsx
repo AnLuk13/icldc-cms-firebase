@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -46,7 +46,7 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteProject, setDeleteProject] = useState<Project | null>(null);
-  const { language } = useAppStore();
+  const language = useLocale();
   const { toast } = useToast();
   const t = useTranslations();
 

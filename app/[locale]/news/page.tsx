@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { isThisMonth, isThisWeek } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 export default function NewsPage() {
   const [news, setNews] = useState<News[]>([]);
@@ -47,7 +47,7 @@ export default function NewsPage() {
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [deleteNews, setDeleteNews] = useState<News | null>(null);
-  const { language } = useAppStore();
+  const language = useLocale();
   const { toast } = useToast();
   const t = useTranslations();
 

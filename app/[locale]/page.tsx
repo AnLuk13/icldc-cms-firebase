@@ -21,6 +21,7 @@ import {
 import { Link } from "@/i18n/routing";
 import { newsApi, eventsApi, partnersApi, projectsApi } from "@/lib/api";
 import { useTranslations } from "next-intl";
+import { useAppStore } from "@/lib/store";
 
 interface DashboardStats {
   totalProjects: number;
@@ -40,14 +41,18 @@ const quickActions = [
 ];
 
 export default function DashboardPage() {
+  const { isAuthenticated } = useAppStore();
+  console.log("DashboardPage - isAuthenticated:", isAuthenticated);
   const t = useTranslations();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (isAuthenticated) {
+      loadDashboardData();
+    }
+  }, [isAuthenticated]);
 
   const loadDashboardData = async () => {
     try {
@@ -246,7 +251,7 @@ export default function DashboardPage() {
                 <Link key={action.title} href={action.href}>
                   <Button
                     variant="outline"
-                    className="w-full justify-start gap-2 h-auto p-4 bg-transparent"
+                    className="w-full justify-start gap-2 h-auto p-4"
                   >
                     <action.icon className="h-5 w-5" />
                     <div className="text-left">

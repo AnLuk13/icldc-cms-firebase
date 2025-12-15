@@ -14,12 +14,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen, toggleSidebar, user } = useAppStore();
-  const t = useTranslations('navigation');
+  const t = useTranslations("navigation");
 
   const baseNavigation = [
     { name: t("dashboard"), href: "/", icon: Home },
@@ -29,9 +29,10 @@ export function Sidebar() {
     { name: t("news"), href: "/news", icon: Newspaper },
   ];
 
-  const adminNavigation = user?.role === "admin" 
-    ? [{ name: t("users"), href: "/users", icon: UserCheck }]
-    : [];
+  const adminNavigation =
+    user?.role === "admin"
+      ? [{ name: t("users"), href: "/users", icon: UserCheck }]
+      : [];
 
   const navigation = [...baseNavigation, ...adminNavigation];
 
@@ -47,7 +48,7 @@ export function Sidebar() {
         <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           {sidebarOpen && (
             <h1 className="text-lg font-semibold text-sidebar-foreground text-nowrap">
-              {t('cmsTitle')}
+              {t("cmsTitle")}
             </h1>
           )}
           <Button
@@ -73,7 +74,7 @@ export function Sidebar() {
                 key={item.name}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-nowrap",
                   isActive
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
@@ -87,7 +88,7 @@ export function Sidebar() {
         </nav>
 
         {/* Settings */}
-        <div className="border-t border-sidebar-border p-2">
+        {/* <div className="border-t border-sidebar-border p-2">
           <Link
             href="/settings"
             className={cn(
@@ -98,9 +99,9 @@ export function Sidebar() {
             )}
           >
             <Settings className="h-5 w-5 flex-shrink-0" />
-            {sidebarOpen && <span>{t('settings')}</span>}
+            {sidebarOpen && <span>{t("settings")}</span>}
           </Link>
-        </div>
+        </div> */}
       </div>
     </div>
   );

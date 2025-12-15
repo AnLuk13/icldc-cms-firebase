@@ -16,6 +16,8 @@ import { useAppStore } from "@/lib/store";
 import { useRouter } from "@/i18n/routing";
 import { LanguageSwitcher } from "./language-switcher";
 import { useTranslations } from "next-intl";
+import { authApi } from "@/lib/api";
+import { toast } from "@/hooks/use-toast";
 
 export function Header() {
   const { user, logout, sidebarOpen } = useAppStore();
@@ -23,8 +25,23 @@ export function Header() {
   const t = useTranslations();
 
   const handleLogout = () => {
-    logout();
-    router.push("/login");
+    authApi
+      .logout()
+      .then(() => {
+        toast({
+          title: "Success",
+          description: "Logged out successfully.",
+        });
+        logout();
+        router.push("/login");
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to log out. Please try again.",
+          variant: "destructive",
+        });
+      });
   };
 
   return (

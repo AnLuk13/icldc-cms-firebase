@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Edit, Trash2, Calendar, Users } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useAppStore } from "@/lib/store";
 import { getLocalizedText } from "@/components/language-tabs";
 import type { Project } from "@/lib/types";
@@ -37,7 +37,7 @@ export function ProjectTable({
 }: ProjectTableProps) {
   const t = useTranslations("projects.table");
   const tc = useTranslations("common");
-  const { language } = useAppStore();
+  const language = useLocale();
 
   if (loading) {
     return (

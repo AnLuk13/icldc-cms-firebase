@@ -27,7 +27,7 @@ import {
 import { convertFileToBase64, projectsApi } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import type { Partner, Language, MultilingualText, Project } from "@/lib/types";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 interface PartnerFormProps {
   partner?: Partner | null;
@@ -47,7 +47,7 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
   const [uploading, setUploading] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loadingProjects, setLoadingProjects] = useState(true);
-  const { language } = useAppStore();
+  const language = useLocale();
   const t = useTranslations("partners.form");
   const tCommon = useTranslations("common");
 
