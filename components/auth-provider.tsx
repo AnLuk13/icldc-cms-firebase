@@ -32,8 +32,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [isAuthenticated]);
 
-  console.log("isAuthenticated:", isAuthenticated);
-
   // Show loading state while checking authentication
   if (isLoading) {
     return (

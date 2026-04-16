@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
+import { requireAdmin } from "@/lib/auth"
 import { forwardToNestJS } from "@/lib/nestjs-proxy"
 
 export async function GET(request: NextRequest) {
@@ -6,5 +7,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  return forwardToNestJS(request, "/users")
+  try {
+    await requireAdmin()
+    return forwardToNestJS(request, "/users")
+  } catch (error) {
+    return NextResponse.json({ message: "Forbidden" }, { status: 403 })
+  }
 }

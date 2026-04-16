@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosRequestConfig, AxiosError } from "axios";
 import type { Project, Partner, Event, News, User } from "./types";
 
 // API Error class for better error handling
@@ -18,7 +18,7 @@ export class ApiError extends Error {
 const apiClient = axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true, // Include cookies in requests
 });
@@ -26,7 +26,7 @@ const apiClient = axios.create({
 // Generic API helper
 async function apiRequest<T>(
   endpoint: string,
-  options: AxiosRequestConfig = {}
+  options: AxiosRequestConfig = {},
 ): Promise<T> {
   try {
     const response = await apiClient.request<T>({
@@ -36,7 +36,10 @@ async function apiRequest<T>(
     return response.data;
   } catch (error) {
     const axiosError = error as AxiosError<any>;
-    const errorMessage = axiosError.response?.data?.message || axiosError.message || "Request failed";
+    const errorMessage =
+      axiosError.response?.data?.message ||
+      axiosError.message ||
+      "Request failed";
     const status = axiosError.response?.status || 500;
     throw new ApiError(errorMessage, status, axiosError.response?.data);
   }
@@ -122,15 +125,54 @@ export const newsApi = {
     }),
 };
 
-// File upload helper
+// File upload helper — raw base64 (for non-image files like PDFs)
 export function convertFileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve(result);
-    };
+    reader.onload = () => resolve(reader.result as string);
     reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Compress an image file via Canvas before base64 encoding.
+ * - Strips all EXIF / ICC / thumbnail metadata
+ * - Re-encodes as JPEG at the given quality (0–1)
+ * - Scales down proportionally if either dimension exceeds maxWidth / maxHeight
+ */
+export function compressImageToBase64(
+  file: File,
+  maxWidth = 1920,
+  maxHeight = 1080,
+  quality = 0.82,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas context unavailable"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = e.target?.result as string;
+    };
     reader.readAsDataURL(file);
   });
 }

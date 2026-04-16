@@ -15,7 +15,7 @@ import {
   LanguageTabs,
   createEmptyMultilingualText,
 } from "@/components/language-tabs";
-import { convertFileToBase64 } from "@/lib/api";
+import { convertFileToBase64, compressImageToBase64 } from "@/lib/api";
 import type { News, Language, MultilingualText } from "@/lib/types";
 import { useTranslations } from "next-intl";
 
@@ -91,12 +91,12 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   const handleRemoveTag = (tagToRemove: string) => {
     setValue(
       "tags",
-      watchedTags.filter((tag) => tag !== tagToRemove)
+      watchedTags.filter((tag) => tag !== tagToRemove),
     );
   };
 
   const handleBannerUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -109,7 +109,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
     setUploading(true);
     try {
-      const base64 = await convertFileToBase64(file);
+      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
       setValue("bannerImage", base64);
     } catch (error) {
       console.error("Banner upload error:", error);
@@ -124,14 +124,14 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   };
 
   const handleDocumentUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (!files) return;
 
     // Check individual file sizes (max 2MB per document)
     const oversizedFiles = Array.from(files).filter(
-      (file) => file.size > 2 * 1024 * 1024
+      (file) => file.size > 2 * 1024 * 1024,
     );
     if (oversizedFiles.length > 0) {
       alert(t("documentsSizeError"));
@@ -142,7 +142,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
     const totalExistingSize = watchedDocuments.length * 1024 * 1024; // Rough estimate
     const newFilesSize = Array.from(files).reduce(
       (total, file) => total + file.size,
-      0
+      0,
     );
     if (totalExistingSize + newFilesSize > 8 * 1024 * 1024) {
       alert(t("documentsTotalSizeError"));
@@ -155,7 +155,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
         Array.from(files).map(async (file) => {
           const base64 = await convertFileToBase64(file);
           return base64;
-        })
+        }),
       );
       setValue("documents", [...watchedDocuments, ...base64Files]);
     } catch (error) {
@@ -169,7 +169,7 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   const handleRemoveDocument = (index: number) => {
     setValue(
       "documents",
-      watchedDocuments.filter((_, i) => i !== index)
+      watchedDocuments.filter((_, i) => i !== index),
     );
   };
 
@@ -435,8 +435,8 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
           {isSubmitting
             ? tCommon("saving")
             : news
-            ? t("updateArticle")
-            : t("createArticle")}
+              ? t("updateArticle")
+              : t("createArticle")}
         </Button>
       </div>
     </form>

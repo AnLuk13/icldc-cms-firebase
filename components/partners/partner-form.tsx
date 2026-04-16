@@ -24,7 +24,7 @@ import {
   createEmptyMultilingualText,
   getLocalizedText,
 } from "@/components/language-tabs";
-import { convertFileToBase64, projectsApi } from "@/lib/api";
+import { compressImageToBase64, projectsApi } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import type { Partner, Language, MultilingualText, Project } from "@/lib/types";
 import { useLocale, useTranslations } from "next-intl";
@@ -101,14 +101,14 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
   const watchedProjects = watch("projects");
 
   const handleLogoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
     try {
-      const base64 = await convertFileToBase64(file);
+      const base64 = await compressImageToBase64(file, 400, 400, 0.85);
       setValue("logo", base64);
     } catch (error) {
       console.error("Logo upload error:", error);
@@ -298,8 +298,8 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
                             } else {
                               field.onChange(
                                 currentProjects.filter(
-                                  (id) => id !== project._id
-                                )
+                                  (id) => id !== project._id,
+                                ),
                               );
                             }
                           }}
@@ -366,8 +366,8 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
           {isSubmitting
             ? tCommon("saving")
             : partner
-            ? t("updatePartner")
-            : t("createPartner")}
+              ? t("updatePartner")
+              : t("createPartner")}
         </Button>
       </div>
     </form>

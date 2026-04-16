@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Upload, X } from "lucide-react";
 import { LanguageTabs } from "@/components/language-tabs";
-import { homeContentApi, ApiError } from "@/lib/api";
+import { homeContentApi, ApiError, compressImageToBase64 } from "@/lib/api";
 
 const homeContentSchema = z.object({
   heroTitle: z.object({
@@ -69,7 +69,7 @@ export default function HomeContentPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [heroImagePreview, setHeroImagePreview] = useState<string | null>(null);
   const [aboutImagePreview, setAboutImagePreview] = useState<string | null>(
-    null
+    null,
   );
   const { toast } = useToast();
 
@@ -130,23 +130,22 @@ export default function HomeContentPage() {
     }
   };
 
-  const handleImageUpload = (
+  const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    field: "heroImage" | "aboutImage"
+    field: "heroImage" | "aboutImage",
   ) => {
     const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64 = e.target?.result as string;
-        setValue(field, base64);
-        if (field === "heroImage") {
-          setHeroImagePreview(base64);
-        } else {
-          setAboutImagePreview(base64);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    try {
+      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
+      setValue(field, base64);
+      if (field === "heroImage") {
+        setHeroImagePreview(base64);
+      } else {
+        setAboutImagePreview(base64);
+      }
+    } catch (error) {
+      console.error("Image upload error:", error);
     }
   };
 

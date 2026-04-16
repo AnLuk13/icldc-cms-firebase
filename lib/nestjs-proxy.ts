@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import axios, { AxiosError, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 export async function forwardToNestJS(request: NextRequest, path: string) {
   try {
@@ -24,10 +24,10 @@ export async function forwardToNestJS(request: NextRequest, path: string) {
         if (bodySize > 10 * 1024 * 1024) {
           return NextResponse.json(
             { error: "Request payload too large. Maximum size is 10MB." },
-            { status: 413 }
+            { status: 413 },
           );
         }
-        
+
         // Try to parse JSON, fallback to raw text
         try {
           requestData = JSON.parse(body);
@@ -44,37 +44,44 @@ export async function forwardToNestJS(request: NextRequest, path: string) {
       data: requestData,
       // Don't follow redirects automatically
       maxRedirects: 0,
+      // Allow large payloads (e.g. base64 images)
+      maxBodyLength: Infinity,
+      maxContentLength: Infinity,
     };
 
     const response = await axios.request(axiosConfig);
-    
+
     // Return the response data
     return NextResponse.json(response.data || { success: true });
-
   } catch (error) {
     console.error("Error forwarding to NestJS:", error);
 
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<any>;
-      
+
       if (axiosError.response) {
         // The request was made and the server responded with an error status
         return NextResponse.json(
-          { error: axiosError.response.data?.message || axiosError.response.data || "Request failed" },
-          { status: axiosError.response.status }
+          {
+            error:
+              axiosError.response.data?.message ||
+              axiosError.response.data ||
+              "Request failed",
+          },
+          { status: axiosError.response.status },
         );
       } else if (axiosError.request) {
         // The request was made but no response was received
         return NextResponse.json(
           { error: "NestJS backend is not available" },
-          { status: 503 }
+          { status: 503 },
         );
       }
     }
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -33,6 +33,7 @@ import {
   getLocalizedText,
 } from "@/components/language-tabs";
 import { convertFileToBase64, partnersApi } from "@/lib/api";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useAppStore } from "@/lib/store";
 import type { Project, Language, MultilingualText, Partner } from "@/lib/types";
 
@@ -46,8 +47,8 @@ interface FormData {
   name: MultilingualText;
   description: MultilingualText;
   status: "ongoing" | "completed" | "planned";
-  startDate: string;
-  endDate: string;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
   partners: string[];
   documents: string[];
   tags: string[];
@@ -82,12 +83,8 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
           : project.description
         : createEmptyMultilingualText(),
       status: project?.status || "planned",
-      startDate: project?.startDate
-        ? new Date(project.startDate).toISOString().split("T")[0]
-        : "",
-      endDate: project?.endDate
-        ? new Date(project.endDate).toISOString().split("T")[0]
-        : "",
+      startDate: project?.startDate ? new Date(project.startDate) : undefined,
+      endDate: project?.endDate ? new Date(project.endDate) : undefined,
       partners: project?.partners
         ? project.partners
             .map((p) => (typeof p === "object" ? p._id : p))
@@ -128,12 +125,12 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
   const handleRemoveTag = (tagToRemove: string) => {
     setValue(
       "tags",
-      watchedTags.filter((tag) => tag !== tagToRemove)
+      watchedTags.filter((tag) => tag !== tagToRemove),
     );
   };
 
   const handleFileUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const files = event.target.files;
     if (!files) return;
@@ -144,7 +141,7 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
         Array.from(files).map(async (file) => {
           const base64 = await convertFileToBase64(file);
           return base64;
-        })
+        }),
       );
       setValue("documents", [...watchedDocuments, ...base64Files]);
     } catch (error) {
@@ -157,22 +154,22 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
   const handleRemoveDocument = (index: number) => {
     setValue(
       "documents",
-      watchedDocuments.filter((_, i) => i !== index)
+      watchedDocuments.filter((_, i) => i !== index),
     );
   };
 
   const onFormSubmit = (data: FormData) => {
-    const projectData: Omit<Project, "_id"> = {
+    const projectData = {
       name: data.name,
       description: data.description,
       status: data.status,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      partners: data.partners as any, // Send as string IDs, backend will handle population
+      startDate: data.startDate ?? null,
+      endDate: data.endDate ?? null,
+      partners: data.partners as any,
       documents: data.documents,
       tags: data.tags,
     };
-    onSubmit(projectData);
+    onSubmit(projectData as Omit<Project, "_id">);
   };
 
   return (
@@ -258,19 +255,19 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
       <div className="grid gap-4 md:grid-cols-2 w-full overflow-hidden">
         <div className="space-y-2 w-full min-w-0">
           <Label className="text-wrap break-words">{tc("startDate")}</Label>
-          <Input
-            type="date"
-            className="w-full min-w-0"
-            {...register("startDate", {
-              required: t("startDateRequired"),
-              validate: (value) => {
-                const endDate = watch("endDate");
-                if (value && endDate && new Date(value) >= new Date(endDate)) {
-                  return t("endDateAfterStart");
-                }
-                return true;
-              },
-            })}
+          <Controller
+            name="startDate"
+            control={control}
+            rules={{ required: t("startDateRequired") }}
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                showTime={false}
+                placeholder={tc("startDate")}
+                className="w-full min-w-0"
+              />
+            )}
           />
           {errors.startDate && (
             <p className="text-sm text-destructive text-wrap break-words">
@@ -281,23 +278,19 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
 
         <div className="space-y-2 w-full min-w-0">
           <Label className="text-wrap break-words">{tc("endDate")}</Label>
-          <Input
-            type="date"
-            className="w-full min-w-0"
-            {...register("endDate", {
-              required: t("endDateRequired"),
-              validate: (value) => {
-                const startDate = watch("startDate");
-                if (
-                  value &&
-                  startDate &&
-                  new Date(value) <= new Date(startDate)
-                ) {
-                  return t("endDateAfterStart");
-                }
-                return true;
-              },
-            })}
+          <Controller
+            name="endDate"
+            control={control}
+            rules={{ required: t("endDateRequired") }}
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                showTime={false}
+                placeholder={tc("endDate")}
+                className="w-full min-w-0"
+              />
+            )}
           />
           {errors.endDate && (
             <p className="text-sm text-destructive text-wrap break-words">
@@ -389,8 +382,8 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
                             } else {
                               field.onChange(
                                 currentPartners.filter(
-                                  (id) => id !== partner._id
-                                )
+                                  (id) => id !== partner._id,
+                                ),
                               );
                             }
                           }}
@@ -423,7 +416,7 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
                               <p className="text-xs text-muted-foreground line-clamp-2">
                                 {getLocalizedText(
                                   partner.description,
-                                  language
+                                  language,
                                 )}
                               </p>
                             )}
@@ -548,8 +541,8 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
               ? t("updating")
               : t("creating")
             : project
-            ? t("updateProject")
-            : t("createProject")}
+              ? t("updateProject")
+              : t("createProject")}
         </Button>
       </div>
     </form>

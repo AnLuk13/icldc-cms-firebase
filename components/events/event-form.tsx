@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +14,8 @@ import {
   LanguageTabs,
   createEmptyMultilingualText,
 } from "@/components/language-tabs";
-import { convertFileToBase64 } from "@/lib/api";
+import { compressImageToBase64 } from "@/lib/api";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { Event, Language, MultilingualText } from "@/lib/types";
 import { useTranslations } from "next-intl";
 
@@ -28,8 +29,8 @@ interface FormData {
   name: MultilingualText;
   description: MultilingualText;
   location: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date | undefined;
+  endDate: Date | undefined;
   organizer: string;
   registrationLink: string;
   bannerImage: string;
@@ -47,6 +48,7 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
@@ -61,12 +63,8 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           : event.description
         : createEmptyMultilingualText(),
       location: event?.location || "",
-      startDate: event?.startDate
-        ? new Date(event.startDate).toISOString().slice(0, 16)
-        : "",
-      endDate: event?.endDate
-        ? new Date(event.endDate).toISOString().slice(0, 16)
-        : "",
+      startDate: event?.startDate ? new Date(event.startDate) : undefined,
+      endDate: event?.endDate ? new Date(event.endDate) : undefined,
       organizer: event?.organizer || "",
       registrationLink: event?.registrationLink || "",
       bannerImage: event?.bannerImage || "",
@@ -87,19 +85,19 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   const handleRemoveTag = (tagToRemove: string) => {
     setValue(
       "tags",
-      watchedTags.filter((tag) => tag !== tagToRemove)
+      watchedTags.filter((tag) => tag !== tagToRemove),
     );
   };
 
   const handleBannerUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
     try {
-      const base64 = await convertFileToBase64(file);
+      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
       setValue("bannerImage", base64);
     } catch (error) {
       console.error("Banner upload error:", error);
@@ -113,16 +111,16 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   };
 
   const onFormSubmit = (data: FormData) => {
-    const eventData: Omit<Event, "_id"> = {
+    const eventData = {
       ...data,
-      startDate: data.startDate ? new Date(data.startDate) : undefined,
-      endDate: data.endDate ? new Date(data.endDate) : undefined,
-      location: data.location || undefined,
-      organizer: data.organizer || undefined,
-      registrationLink: data.registrationLink || undefined,
-      bannerImage: data.bannerImage || undefined,
+      startDate: data.startDate,
+      endDate: data.endDate ?? null,
+      location: data.location || null,
+      organizer: data.organizer || null,
+      registrationLink: data.registrationLink || null,
+      bannerImage: data.bannerImage || null,
     };
-    onSubmit(eventData);
+    onSubmit(eventData as Omit<Event, "_id">);
   };
 
   return (
@@ -196,11 +194,18 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           <Label>
             {t("startDate")} {tCommon("required")}
           </Label>
-          <Input
-            type="datetime-local"
-            {...register("startDate", {
-              required: t("startDateRequired"),
-            })}
+          <Controller
+            name="startDate"
+            control={control}
+            rules={{ required: t("startDateRequired") }}
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                showTime
+                placeholder={t("startDate")}
+              />
+            )}
           />
           {errors.startDate && (
             <p className="text-sm text-destructive">
@@ -211,7 +216,18 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
         <div className="space-y-2">
           <Label>{t("endDate")}</Label>
-          <Input type="datetime-local" {...register("endDate")} />
+          <Controller
+            name="endDate"
+            control={control}
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                showTime
+                placeholder={t("endDate")}
+              />
+            )}
+          />
         </div>
       </div>
 
@@ -320,8 +336,8 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
           {isSubmitting
             ? tCommon("saving")
             : event
-            ? t("updateEvent")
-            : t("createEvent")}
+              ? t("updateEvent")
+              : t("createEvent")}
         </Button>
       </div>
     </form>
