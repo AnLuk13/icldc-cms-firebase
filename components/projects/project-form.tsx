@@ -26,13 +26,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { X, Upload, File, Users } from "lucide-react";
+import { X, Upload, File, Users, ExternalLink, Download } from "lucide-react";
 import {
   LanguageTabs,
   createEmptyMultilingualText,
   getLocalizedText,
 } from "@/components/language-tabs";
-import { convertFileToBase64, partnersApi } from "@/lib/api";
+import { uploadToStorage, deleteFromStorage, partnersApi } from "@/lib/api";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { useAppStore } from "@/lib/store";
 import type { Project, Language, MultilingualText, Partner } from "@/lib/types";
@@ -137,13 +137,12 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
 
     setUploading(true);
     try {
-      const base64Files = await Promise.all(
-        Array.from(files).map(async (file) => {
-          const base64 = await convertFileToBase64(file);
-          return base64;
-        }),
+      const urls = await Promise.all(
+        Array.from(files).map((file) =>
+          uploadToStorage(file, "projects/documents"),
+        ),
       );
-      setValue("documents", [...watchedDocuments, ...base64Files]);
+      setValue("documents", [...watchedDocuments, ...urls]);
     } catch (error) {
       console.error("File upload error:", error);
     } finally {
@@ -152,10 +151,12 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
   };
 
   const handleRemoveDocument = (index: number) => {
+    const url = watchedDocuments[index];
     setValue(
       "documents",
       watchedDocuments.filter((_, i) => i !== index),
     );
+    deleteFromStorage(url).catch(console.error);
   };
 
   const onFormSubmit = (data: FormData) => {
@@ -507,14 +508,35 @@ export function ProjectForm({ project, onSubmit, onCancel }: ProjectFormProps) {
                     {tc("document")} {index + 1}
                   </span>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveDocument(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <a
+                    href={doc}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button type="button" variant="ghost" size="sm">
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <a
+                    href={doc}
+                    download={`document-${index + 1}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button type="button" variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveDocument(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -1,128 +1,105 @@
-import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import { auth } from "@/lib/firebase/client";
 import type { Project, Partner, Event, News, User } from "./types";
 
-// API Error class for better error handling
-export class ApiError extends Error {
-  public status: number;
-  public data?: any;
+const API_BASE = "/api";
 
-  constructor(message: string, status: number, data?: any) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-    this.data = data;
-  }
-}
-
-// Create axios instance with default config
-const apiClient = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true, // Include cookies in requests
-});
-
-// Generic API helper
-async function apiRequest<T>(
+async function fetchAPI<T>(
   endpoint: string,
-  options: AxiosRequestConfig = {},
+  options?: RequestInit,
 ): Promise<T> {
-  try {
-    const response = await apiClient.request<T>({
-      url: endpoint,
-      ...options,
-    });
-    return response.data;
-  } catch (error) {
-    const axiosError = error as AxiosError<any>;
-    const errorMessage =
-      axiosError.response?.data?.message ||
-      axiosError.message ||
-      "Request failed";
-    const status = axiosError.response?.status || 500;
-    throw new ApiError(errorMessage, status, axiosError.response?.data);
+  // Always get a fresh (auto-refreshed) ID token from the Firebase client SDK
+  const token = await auth.currentUser?.getIdToken();
+
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Request failed" }));
+    throw new Error(error.error || error.message || "Request failed");
   }
+
+  return response.json();
 }
 
 // Projects API
 export const projectsApi = {
-  getAll: () => apiRequest<Project[]>("/projects"),
-  getById: (id: string) => apiRequest<Project>(`/projects/${id}`),
+  getAll: () => fetchAPI<Project[]>("/projects"),
+  getById: (id: string) => fetchAPI<Project>(`/projects/${id}`),
   create: (project: Omit<Project, "_id">) =>
-    apiRequest<Project>("/projects", {
+    fetchAPI<Project>("/projects", {
       method: "POST",
-      data: project,
+      body: JSON.stringify(project),
     }),
   update: (id: string, project: Partial<Project>) =>
-    apiRequest<Project>(`/projects/${id}`, {
+    fetchAPI<Project>(`/projects/${id}`, {
       method: "PUT",
-      data: project,
+      body: JSON.stringify(project),
     }),
   delete: (id: string) =>
-    apiRequest<{ success: boolean }>(`/projects/${id}`, {
-      method: "DELETE",
-    }),
+    fetchAPI<{ success: boolean }>(`/projects/${id}`, { method: "DELETE" }),
 };
 
 // Partners API
 export const partnersApi = {
-  getAll: () => apiRequest<Partner[]>("/partners"),
-  getById: (id: string) => apiRequest<Partner>(`/partners/${id}`),
+  getAll: () => fetchAPI<Partner[]>("/partners"),
+  getById: (id: string) => fetchAPI<Partner>(`/partners/${id}`),
   create: (partner: Omit<Partner, "_id">) =>
-    apiRequest<Partner>("/partners", {
+    fetchAPI<Partner>("/partners", {
       method: "POST",
-      data: partner,
+      body: JSON.stringify(partner),
     }),
   update: (id: string, partner: Partial<Partner>) =>
-    apiRequest<Partner>(`/partners/${id}`, {
+    fetchAPI<Partner>(`/partners/${id}`, {
       method: "PUT",
-      data: partner,
+      body: JSON.stringify(partner),
     }),
   delete: (id: string) =>
-    apiRequest<{ success: boolean }>(`/partners/${id}`, {
-      method: "DELETE",
-    }),
+    fetchAPI<{ success: boolean }>(`/partners/${id}`, { method: "DELETE" }),
 };
 
 // Events API
 export const eventsApi = {
-  getAll: () => apiRequest<Event[]>("/events"),
-  getById: (id: string) => apiRequest<Event>(`/events/${id}`),
+  getAll: () => fetchAPI<Event[]>("/events"),
+  getById: (id: string) => fetchAPI<Event>(`/events/${id}`),
   create: (event: Omit<Event, "_id">) =>
-    apiRequest<Event>("/events", {
+    fetchAPI<Event>("/events", {
       method: "POST",
-      data: event,
+      body: JSON.stringify(event),
     }),
   update: (id: string, event: Partial<Event>) =>
-    apiRequest<Event>(`/events/${id}`, {
+    fetchAPI<Event>(`/events/${id}`, {
       method: "PUT",
-      data: event,
+      body: JSON.stringify(event),
     }),
   delete: (id: string) =>
-    apiRequest<{ success: boolean }>(`/events/${id}`, {
-      method: "DELETE",
-    }),
+    fetchAPI<{ success: boolean }>(`/events/${id}`, { method: "DELETE" }),
 };
 
 // News API
 export const newsApi = {
-  getAll: () => apiRequest<News[]>("/news"),
-  getById: (id: string) => apiRequest<News>(`/news/${id}`),
+  getAll: () => fetchAPI<News[]>("/news"),
+  getById: (id: string) => fetchAPI<News>(`/news/${id}`),
   create: (news: Omit<News, "_id">) =>
-    apiRequest<News>("/news", {
+    fetchAPI<News>("/news", {
       method: "POST",
-      data: news,
+      body: JSON.stringify(news),
     }),
   update: (id: string, news: Partial<News>) =>
-    apiRequest<News>(`/news/${id}`, {
+    fetchAPI<News>(`/news/${id}`, {
       method: "PUT",
-      data: news,
+      body: JSON.stringify(news),
     }),
   delete: (id: string) =>
-    apiRequest<{ success: boolean }>(`/news/${id}`, {
-      method: "DELETE",
-    }),
+    fetchAPI<{ success: boolean }>(`/news/${id}`, { method: "DELETE" }),
 };
 
 // File upload helper — raw base64 (for non-image files like PDFs)
@@ -179,43 +156,126 @@ export function compressImageToBase64(
 
 // Authentication API
 export const authApi = {
-  login: (credentials: { email: string; password: string }) =>
-    apiRequest<{ user: any; message: string }>("/auth/login", {
+  // Login page calls signInWithEmailAndPassword client-side first, then passes
+  // the ID token here to create an httpOnly session cookie + get Firestore user data.
+  login: (idToken: string) =>
+    fetchAPI<{ user: User; message: string }>("/auth/login", {
       method: "POST",
-      data: credentials,
+      body: JSON.stringify({ idToken }),
     }),
   logout: () =>
-    apiRequest<{ message: string }>("/auth/logout", {
-      method: "POST",
-    }),
+    fetchAPI<{ message: string }>("/auth/logout", { method: "POST" }),
+  me: () => fetchAPI<{ user: User }>("/auth/me"),
 };
 
 // Home Content API
 export const homeContentApi = {
-  get: () => apiRequest<any>("/home-content"),
+  get: () => fetchAPI<any>("/home-content"),
   update: (content: any) =>
-    apiRequest<any>("/home-content", {
+    fetchAPI<any>("/home-content", {
       method: "PUT",
-      data: content,
+      body: JSON.stringify(content),
     }),
 };
 
+/**
+ * Upload a file to Firebase Storage via the /api/upload route.
+ * Returns the public Storage URL.
+ */
+export async function uploadToStorage(
+  file: File,
+  folder: string,
+): Promise<string> {
+  const token = await auth.currentUser?.getIdToken();
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  const response = await fetch("/api/upload", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({ message: "Upload failed" }));
+    throw new Error(err.message || "Upload failed");
+  }
+
+  const { url } = await response.json();
+  return url as string;
+}
+
+/**
+ * Delete a file from Firebase Storage via the /api/upload/delete route.
+ * No-ops for non-Storage URLs (e.g. base64 data URLs from older records).
+ */
+export async function deleteFromStorage(url: string): Promise<void> {
+  if (!url?.startsWith("https://storage.googleapis.com")) return;
+  const token = await auth.currentUser?.getIdToken();
+  await fetch("/api/upload/delete", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: JSON.stringify({ url }),
+  });
+}
+
 // Users API
 export const usersApi = {
-  getAll: () => apiRequest<User[]>("/users"),
-  getById: (id: string) => apiRequest<User>(`/users/${id}`),
+  getAll: () => fetchAPI<User[]>("/users"),
+  getById: (id: string) => fetchAPI<User>(`/users/${id}`),
   create: (user: Omit<User, "_id">) =>
-    apiRequest<User>("/users", {
+    fetchAPI<User>("/users", {
       method: "POST",
-      data: user,
+      body: JSON.stringify(user),
     }),
   update: (id: string, user: Partial<User>) =>
-    apiRequest<User>(`/users/${id}`, {
+    fetchAPI<User>(`/users/${id}`, {
       method: "PUT",
-      data: user,
+      body: JSON.stringify(user),
     }),
   delete: (id: string) =>
-    apiRequest<{ success: boolean }>(`/users/${id}`, {
-      method: "DELETE",
-    }),
+    fetchAPI<{ success: boolean }>(`/users/${id}`, { method: "DELETE" }),
 };
+
+/**
+ * Upload a file to Firebase Storage via the /api/upload route.
+ * Returns the public download URL.
+ */
+export async function uploadFileToStorage(
+  file: File,
+  folder = "uploads",
+): Promise<string> {
+  const token = await auth.currentUser?.getIdToken();
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
+
+  // Do NOT set Content-Type — fetch sets it automatically with the correct boundary
+  const response = await fetch(`${API_BASE}/upload`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response
+      .json()
+      .catch(() => ({ error: "Upload failed" }));
+    throw new Error(error.error || error.message || "Upload failed");
+  }
+
+  const data = await response.json();
+  return data.url;
+}

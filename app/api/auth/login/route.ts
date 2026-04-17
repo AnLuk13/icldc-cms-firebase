@@ -1,59 +1,78 @@
 import { type NextRequest, NextResponse } from "next/server";
-// import { createToken } from "@/lib/auth";
-import { forwardToNestJS } from "@/lib/nestjs-proxy";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+
+// 12-hour session
+const SESSION_EXPIRES_MS = 12 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   try {
-    // Try to forward to NestJS first
-    try {
-      const nestResponse = await forwardToNestJS(request, "/auth/login");
+    const { idToken } = await request.json();
 
-      // If NestJS returns a successful response, extract user data and generate our own token
-      if (nestResponse.ok) {
-        const nestData = await nestResponse.json();
-
-        // Extract user data from NestJS response
-        let user = nestData.user || nestData;
-
-        if (user) {
-          // Normalize user data - convert id to _id if needed
-          if (user.id && !user._id) {
-            user = { ...user, _id: user.id };
-            delete user.id;
-          }
-
-          // Create our own JWT token for frontend use
-          // const token = await createToken(user);
-
-          const response = NextResponse.json({
-            user,
-            // token: nestData.access_token,
-            message: nestData.message || "Login successful",
-          });
-
-          // Set HTTP-only cookie
-          response.cookies.set("auth-token", nestData.access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
-            maxAge: 24 * 60 * 60, // 24 hours
-            path: "/",
-          });
-
-          return response;
-        }
-      }
-
-      // If NestJS response is not ok, return it as is
-      return nestResponse;
-    } catch (nestError) {
-      // NestJS not available, could add fallback authentication here
+    if (!idToken) {
+      return NextResponse.json(
+        { error: "ID token is required" },
+        { status: 400 },
+      );
     }
-  } catch (error) {
+
+    // Verify the ID token (proves the client already authenticated with Firebase)
+    const decoded = await getAdminAuth().verifyIdToken(idToken);
+
+    // Get user data from Firestore
+    const usersSnapshot = await getAdminDb()
+      .collection("users")
+      .where("email", "==", decoded.email)
+      .limit(1)
+      .get();
+
+    if (usersSnapshot.empty) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const userDoc = usersSnapshot.docs[0];
+    const userData = {
+      id: userDoc.id,
+      ...userDoc.data(),
+      createdAt: userDoc.data().createdAt?.toDate(),
+      updatedAt: userDoc.data().updatedAt?.toDate(),
+    };
+
+    // Exchange ID token for an httpOnly session cookie with a 12-hour TTL
+    const sessionCookie = await getAdminAuth().createSessionCookie(idToken, {
+      expiresIn: SESSION_EXPIRES_MS,
+    });
+
+    const response = NextResponse.json({
+      user: userData,
+      message: "Login successful",
+    });
+
+    response.cookies.set("auth-token", sessionCookie, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: SESSION_EXPIRES_MS / 1000,
+      path: "/",
+    });
+
+    return response;
+  } catch (error: any) {
     console.error("Login error:", error);
+
+    if (
+      error.code === "auth/id-token-expired" ||
+      error.code === "auth/argument-error" ||
+      error.code === "auth/invalid-id-token"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid or expired token" },
+        { status: 401 },
+      );
+    }
+
     return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
+      { error: error.message || "Login failed" },
+      { status: 500 },
     );
   }
 }

@@ -14,7 +14,7 @@ import {
   LanguageTabs,
   createEmptyMultilingualText,
 } from "@/components/language-tabs";
-import { compressImageToBase64 } from "@/lib/api";
+import { uploadToStorage, deleteFromStorage } from "@/lib/api";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import type { Event, Language, MultilingualText } from "@/lib/types";
 import { useTranslations } from "next-intl";
@@ -97,8 +97,10 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
 
     setUploading(true);
     try {
-      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
-      setValue("bannerImage", base64);
+      const currentUrl = watchedBannerImage;
+      if (currentUrl) deleteFromStorage(currentUrl).catch(console.error);
+      const url = await uploadToStorage(file, "events/banners");
+      setValue("bannerImage", url);
     } catch (error) {
       console.error("Banner upload error:", error);
     } finally {
@@ -107,7 +109,9 @@ export function EventForm({ event, onSubmit, onCancel }: EventFormProps) {
   };
 
   const handleRemoveBanner = () => {
+    const url = watchedBannerImage;
     setValue("bannerImage", "");
+    if (url) deleteFromStorage(url).catch(console.error);
   };
 
   const onFormSubmit = (data: FormData) => {

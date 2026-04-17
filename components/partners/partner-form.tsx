@@ -24,7 +24,7 @@ import {
   createEmptyMultilingualText,
   getLocalizedText,
 } from "@/components/language-tabs";
-import { compressImageToBase64, projectsApi } from "@/lib/api";
+import { uploadToStorage, deleteFromStorage, projectsApi } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 import type { Partner, Language, MultilingualText, Project } from "@/lib/types";
 import { useLocale, useTranslations } from "next-intl";
@@ -108,8 +108,10 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
 
     setUploading(true);
     try {
-      const base64 = await compressImageToBase64(file, 400, 400, 0.85);
-      setValue("logo", base64);
+      const currentUrl = watchedLogo;
+      if (currentUrl) deleteFromStorage(currentUrl).catch(console.error);
+      const url = await uploadToStorage(file, "partners/logos");
+      setValue("logo", url);
     } catch (error) {
       console.error("Logo upload error:", error);
     } finally {
@@ -118,7 +120,9 @@ export function PartnerForm({ partner, onSubmit, onCancel }: PartnerFormProps) {
   };
 
   const handleRemoveLogo = () => {
+    const url = watchedLogo;
     setValue("logo", "");
+    if (url) deleteFromStorage(url).catch(console.error);
   };
 
   const onFormSubmit = (data: FormData) => {

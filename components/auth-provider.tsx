@@ -3,36 +3,35 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAppStore } from "@/lib/store";
-import axios from "axios";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
+import { authApi } from "@/lib/api";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const tc = useTranslations("common");
-  const { setUser, isAuthenticated } = useAppStore();
+  const { setUser } = useAppStore();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
-    // Check if user is already authenticated via cookie
-    const checkAuth = async () => {
-      try {
-        const response = await axios.get("/api/auth/me");
-
-        if (response.data?.user) {
-          setUser(response.data.user);
+    // Firebase SDK restores auth state from IndexedDB on page reload and keeps
+    // tokens fresh. When state resolves, fetch Firestore user data via /api/auth/me.
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const res = await authApi.me();
+          setUser(res.user);
+        } catch {
+          setUser(null);
         }
-      } catch (error) {
-        // Authentication check failed - user will need to login
-        console.log("Authentication check failed:", error);
-      } finally {
-        setIsLoading(false);
+      } else {
+        setUser(null);
       }
-    };
+      setIsLoading(false);
+    });
 
-    // Always check auth on mount, regardless of current state
-    checkAuth();
-  }, [isAuthenticated]);
+    return () => unsubscribe();
+  }, [setUser]);
 
-  // Show loading state while checking authentication
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">

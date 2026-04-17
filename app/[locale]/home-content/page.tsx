@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Upload, X } from "lucide-react";
 import { LanguageTabs } from "@/components/language-tabs";
-import { homeContentApi, ApiError, compressImageToBase64 } from "@/lib/api";
+import { homeContentApi, uploadToStorage, deleteFromStorage } from "@/lib/api";
 
 const homeContentSchema = z.object({
   heroTitle: z.object({
@@ -137,12 +137,14 @@ export default function HomeContentPage() {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
-      setValue(field, base64);
+      const currentUrl = field === "heroImage" ? heroImage : aboutImage;
+      if (currentUrl) deleteFromStorage(currentUrl).catch(console.error);
+      const url = await uploadToStorage(file, "home-content");
+      setValue(field, url);
       if (field === "heroImage") {
-        setHeroImagePreview(base64);
+        setHeroImagePreview(url);
       } else {
-        setAboutImagePreview(base64);
+        setAboutImagePreview(url);
       }
     } catch (error) {
       console.error("Image upload error:", error);
@@ -150,12 +152,14 @@ export default function HomeContentPage() {
   };
 
   const removeImage = (field: "heroImage" | "aboutImage") => {
+    const currentUrl = field === "heroImage" ? heroImage : aboutImage;
     setValue(field, "");
     if (field === "heroImage") {
       setHeroImagePreview(null);
     } else {
       setAboutImagePreview(null);
     }
+    if (currentUrl) deleteFromStorage(currentUrl).catch(console.error);
   };
 
   const onSubmit = async (data: HomeContentForm) => {
@@ -167,13 +171,9 @@ export default function HomeContentPage() {
         description: "Home content updated successfully",
       });
     } catch (error) {
-      const message =
-        error instanceof ApiError
-          ? error.message
-          : "Failed to save home content";
       toast({
         title: "Error",
-        description: message,
+        description: error instanceof Error ? error.message : "Failed to save home content",
         variant: "destructive",
       });
     } finally {

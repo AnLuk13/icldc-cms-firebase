@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helpers ────────────────────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    function isEditor() {
+      return isAuthenticated() &&
+        (request.auth.token.role == 'admin' || request.auth.token.role == 'editor');
+    }
+
+    // ─── Users ──────────────────────────────────────────────────────
+    // Users are managed exclusively server-side via the Admin SDK.
+    // Client-side reads are forbidden; all writes go through API routes.
+    match /users/{userId} {
+      allow read, write: if false;
+    }
+
+    // ─── Site config (home content) ─────────────────────────────────
+    match /site-config/{document} {
+      allow read: if true;         // Public read for the website
+      allow write: if isEditor();  // Editors and admins can update
+    }
+
+    // ─── CMS collections ────────────────────────────────────────────
+    // All writes go through Next.js API routes (Admin SDK bypasses these
+    // rules), so client-side write rules are intentionally restrictive.
+
+    match /events/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /news/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+
+    match /partners/{docId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isEditor();
+      allow delete: if isAdmin();
+    }
+  }
+}

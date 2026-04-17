@@ -35,7 +35,10 @@
     "documents": "Documents",
     "document": "Document",
     "visitWebsite": "Visit website",
-    "selectedPartners": "Selected Partners ({count})"
+    "selectedPartners": "Selected Partners ({count})",
+    "partner": "Partner",
+    "view": "View",
+    "download": "Download"
   },
   "language": {
     "romanian": "Română",
@@ -122,33 +125,32 @@
     "errorCreatingProject": "Failed to create project",
     "form": {
       "projectName": "Project Name",
-      "nameRequired": "English name is required",
-      "namePlaceholder": "Enter project name in {language}",
-      "description": "Description",
+      "projectNameRequired": "Project name is required",
+      "projectNamePlaceholder": "Enter project name",
       "descriptionRequired": "English description is required",
-      "descriptionPlaceholder": "Enter project description in {language}",
-      "status": "Status",
+      "descriptionPlaceholder": "Enter project description",
       "statusRequired": "Status is required",
-      "statusPlaceholder": "Select status",
-      "startDate": "Start Date",
-      "endDate": "End Date",
-      "tags": "Tags",
-      "tagPlaceholder": "Add a tag",
-      "projectPartners": "Project Partners",
+      "selectStatus": "Select status",
+      "statuses": {
+        "planned": "Planned",
+        "ongoing": "Ongoing",
+        "completed": "Completed"
+      },
+      "startDateRequired": "Start date is required",
+      "endDateRequired": "End date is required",
+      "tagsOptional": "Tags (optional)",
+      "tagsPlaceholder": "Add a tag",
       "selectPartners": "Select Partners",
-      "selectPartnersDescription": "Choose which partners are involved in this project",
-      "loadingPartners": "Loading partners...",
-      "noPartners": "No partners available",
-      "selectedPartners": "Selected Partners ({count})",
-      "visitWebsite": "Visit website",
-      "documents": "Documents",
-      "documentsUploadText": "Click to upload documents",
-      "documentNumber": "Document {number}",
+      "noPartnersFound": "No partners found",
+      "searchPartners": "Search partners...",
+      "documentsOptional": "Documents (optional)",
+      "uploadDocuments": "Click to upload documents",
+      "noDocumentsSelected": "No documents selected",
+      "documentsSelected": "{count} document(s) selected",
+      "creating": "Creating...",
+      "updating": "Updating...",
       "updateProject": "Update Project",
-      "createProject": "Create Project",
-      "statusPlanned": "Planned",
-      "statusOngoing": "Ongoing",
-      "statusCompleted": "Completed"
+      "createProject": "Create Project"
     },
     "table": {
       "name": "Name",
@@ -363,6 +365,10 @@
     "allArticles": "All articles",
     "thisWeek": "This Week",
     "publishedRecently": "Published recently",
+    "thisMonth": "This Month",
+    "monthlyPublications": "Published this month",
+    "uncategorized": "No Category",
+    "noCategoryArticles": "Articles without a category",
     "form": {
       "articleTitle": "Article Title",
       "titleRequired": "English title is required",
@@ -393,9 +399,8 @@
       "documentsNote": "Note: At least one document is required. You can add multiple documents.",
       "tags": "Tags (optional)",
       "tagPlaceholder": "Add a tag",
-      "publishDate": "Publish Date (optional)",
-      "publishDatePlaceholder": "Leave empty to save as draft",
-      "publishDateNote": "Set a date to schedule publication, or leave empty to save as draft",
+      "viewDocument": "View document",
+      "downloadDocument": "Download document",
       "updateArticle": "Update Article",
       "createArticle": "Create Article"
     },
@@ -409,8 +414,7 @@
       "actions": "Actions",
       "noNews": "No news articles found",
       "unknown": "Unknown",
-      "noCategory": "No category",
-      "draft": "Draft"
+      "noCategory": "No category"
     }
   },
   "users": {

@@ -9,13 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
-import { X, ImageIcon, Upload, File } from "lucide-react";
+import { X, ImageIcon, Upload, File, ExternalLink, Download } from "lucide-react";
 import {
   LanguageTabs,
   createEmptyMultilingualText,
 } from "@/components/language-tabs";
-import { convertFileToBase64, compressImageToBase64 } from "@/lib/api";
+import { convertFileToBase64, compressImageToBase64, uploadToStorage, deleteFromStorage } from "@/lib/api";
 import type { News, Language, MultilingualText } from "@/lib/types";
 import { useTranslations } from "next-intl";
 
@@ -32,7 +31,6 @@ interface FormData {
   author?: string;
   category?: string;
   tags?: string[];
-  publishedAt?: string;
   bannerImage?: string;
   documents: string[];
 }
@@ -69,9 +67,6 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       author: news?.author || "",
       category: news?.category || "",
       tags: news?.tags || [],
-      publishedAt: news?.publishedAt
-        ? new Date(news.publishedAt).toISOString().slice(0, 16)
-        : "",
       bannerImage: news?.bannerImage || "",
       documents: news?.documents || [],
     },
@@ -109,8 +104,8 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
 
     setUploading(true);
     try {
-      const base64 = await compressImageToBase64(file, 1920, 1080, 0.82);
-      setValue("bannerImage", base64);
+      const url = await uploadToStorage(file, "news/banners");
+      setValue("bannerImage", url);
     } catch (error) {
       console.error("Banner upload error:", error);
       alert(t("bannerUploadError"));
@@ -120,7 +115,9 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   };
 
   const handleRemoveBanner = () => {
+    const url = watchedBannerImage;
     setValue("bannerImage", "");
+    deleteFromStorage(url).catch(console.error);
   };
 
   const handleDocumentUpload = async (
@@ -138,26 +135,14 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       return;
     }
 
-    // Check total payload size (existing + new files)
-    const totalExistingSize = watchedDocuments.length * 1024 * 1024; // Rough estimate
-    const newFilesSize = Array.from(files).reduce(
-      (total, file) => total + file.size,
-      0,
-    );
-    if (totalExistingSize + newFilesSize > 8 * 1024 * 1024) {
-      alert(t("documentsTotalSizeError"));
-      return;
-    }
-
     setUploading(true);
     try {
-      const base64Files = await Promise.all(
-        Array.from(files).map(async (file) => {
-          const base64 = await convertFileToBase64(file);
-          return base64;
-        }),
+      const urls = await Promise.all(
+        Array.from(files).map((file) =>
+          uploadToStorage(file, "news/documents"),
+        ),
       );
-      setValue("documents", [...watchedDocuments, ...base64Files]);
+      setValue("documents", [...watchedDocuments, ...urls]);
     } catch (error) {
       console.error("Document upload error:", error);
       alert(t("documentsUploadError"));
@@ -167,10 +152,12 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
   };
 
   const handleRemoveDocument = (index: number) => {
+    const url = watchedDocuments[index];
     setValue(
       "documents",
       watchedDocuments.filter((_, i) => i !== index),
     );
+    deleteFromStorage(url).catch(console.error);
   };
 
   const onFormSubmit = (data: FormData) => {
@@ -187,7 +174,6 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
       ...(data.category?.trim() && { category: data.category }),
       ...(data.tags && data.tags.length > 0 && { tags: data.tags }),
       ...(data.bannerImage?.trim() && { bannerImage: data.bannerImage }),
-      ...(data.publishedAt && { publishedAt: new Date(data.publishedAt) }),
     };
     onSubmit(newsData);
   };
@@ -368,14 +354,37 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
                     {t("documentNumber", { number: index + 1 })}
                   </span>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveDocument(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <a
+                    href={doc}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t("viewDocument")}
+                  >
+                    <Button type="button" variant="ghost" size="sm">
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <a
+                    href={doc}
+                    download={`document-${index + 1}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t("downloadDocument")}
+                  >
+                    <Button type="button" variant="ghost" size="sm">
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </a>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveDocument(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -413,17 +422,6 @@ export function NewsForm({ news, onSubmit, onCancel }: NewsFormProps) {
             </Badge>
           ))}
         </div>
-      </div>
-
-      {/* Publishing Date */}
-      <div className="space-y-2">
-        <Label>{t("publishDate")}</Label>
-        <Input
-          type="datetime-local"
-          {...register("publishedAt")}
-          placeholder={t("publishDatePlaceholder")}
-        />
-        <p className="text-xs text-muted-foreground">{t("publishDateNote")}</p>
       </div>
 
       {/* Form Actions */}

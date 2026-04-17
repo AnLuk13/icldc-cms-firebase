@@ -1,15 +1,29 @@
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { getAdminAuth } from "@/lib/firebase/admin";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    const sessionCookie = request.cookies.get("auth-token")?.value;
 
-    cookieStore.delete("auth-token");
+    // Revoke server-side refresh tokens so the cookie is dead even if captured
+    if (sessionCookie) {
+      try {
+        const decoded = await getAdminAuth().verifySessionCookie(sessionCookie);
+        await getAdminAuth().revokeRefreshTokens(decoded.uid);
+      } catch {
+        // Cookie already invalid — proceed with cleanup
+      }
+    }
 
-    return NextResponse.json({ message: "Cookie removed" });
-  } catch (error) {
-    console.error("Auth check error:", error);
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    // Client-side signOut(auth) is handled by the caller (header.tsx)
+    const response = NextResponse.json({ message: "Logout successful" });
+    response.cookies.delete("auth-token");
+    return response;
+  } catch (error: any) {
+    console.error("Logout error:", error);
+    return NextResponse.json(
+      { error: error.message || "Logout failed" },
+      { status: 500 },
+    );
   }
 }

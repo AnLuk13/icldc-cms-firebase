@@ -17,6 +17,8 @@ import { useRouter } from "@/i18n/routing";
 import { LanguageSwitcher } from "./language-switcher";
 import { useTranslations } from "next-intl";
 import { authApi } from "@/lib/api";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { toast } from "@/hooks/use-toast";
 
 export function Header() {
@@ -25,8 +27,10 @@ export function Header() {
   const t = useTranslations();
 
   const handleLogout = () => {
-    authApi
-      .logout()
+    Promise.all([
+      authApi.logout(), // clears the httpOnly session cookie
+      signOut(auth), // clears Firebase client auth state
+    ])
       .then(() => {
         toast({
           title: "Success",
@@ -48,7 +52,7 @@ export function Header() {
     <header
       className={cn(
         "h-16 border-b border-border bg-card flex items-center justify-between px-6 transition-all duration-300",
-        sidebarOpen ? "ml-64" : "ml-16"
+        sidebarOpen ? "ml-64" : "ml-16",
       )}
     >
       <div className="flex items-center gap-4">
@@ -75,7 +79,7 @@ export function Header() {
           <DropdownMenuContent className="w-56" align="end" forceMount>
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">
+                <p className="text-sm font-medium leading-none text-foreground">
                   {user?.name || t("common.user")}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">

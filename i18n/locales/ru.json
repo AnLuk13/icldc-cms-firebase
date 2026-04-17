@@ -35,7 +35,10 @@
     "documents": "Документы",
     "document": "Документ",
     "visitWebsite": "Посетить веб-сайт",
-    "selectedPartners": "Выбранные партнеры ({count})"
+    "selectedPartners": "Выбранные партнеры ({count})",
+    "partner": "Партнер",
+    "view": "Просмотр",
+    "download": "Скачать"
   },
   "language": {
     "romanian": "Română",
@@ -363,8 +366,10 @@
     "allArticles": "Все статьи",
     "thisWeek": "На этой неделе",
     "publishedRecently": "Опубликованы недавно",
-    "thisMonth": "В этом месяце",
-    "monthlyPublications": "Месячные публикации",
+    "thisMonth": "Этот месяц",
+    "monthlyPublications": "Опубликовано в этом месяце",
+    "uncategorized": "Без категории",
+    "noCategoryArticles": "Статьи без категории",
     "drafts": "Черновики",
     "unpublishedArticles": "Неопубликованные статьи",
     "categories": "Категории",
@@ -399,9 +404,8 @@
       "documentsNote": "Примечание: Требуется как минимум один документ. Вы можете добавить несколько документов.",
       "tags": "Теги (необязательно)",
       "tagPlaceholder": "Добавить тег",
-      "publishDate": "Дата публикации (необязательно)",
-      "publishDatePlaceholder": "Оставьте пустым для сохранения как черновик",
-      "publishDateNote": "Установите дату для планирования публикации или оставьте пустым для сохранения как черновик",
+      "viewDocument": "Просмотр документа",
+      "downloadDocument": "Скачать документ",
       "updateArticle": "Обновить статью",
       "createArticle": "Создать статью"
     },
@@ -415,8 +419,7 @@
       "actions": "Действия",
       "noNews": "Статьи не найдены",
       "unknown": "Неизвестно",
-      "noCategory": "Без категории",
-      "draft": "Черновик"
+      "noCategory": "Без категории"
     }
   },
   "users": {

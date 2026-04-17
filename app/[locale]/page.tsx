@@ -91,8 +91,8 @@ export default function DashboardPage() {
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
       const newsThisMonth = news.filter((article) => {
-        if (!article.publishedAt) return false;
-        const publishedDate = new Date(article.publishedAt);
+        if (!article.createdAt) return false;
+        const publishedDate = new Date(article.createdAt);
         return (
           publishedDate.getMonth() === currentMonth &&
           publishedDate.getFullYear() === currentYear

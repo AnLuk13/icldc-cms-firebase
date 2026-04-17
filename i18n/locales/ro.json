@@ -35,7 +35,10 @@
     "documents": "Documente",
     "document": "Document",
     "visitWebsite": "Vizitează site-ul web",
-    "selectedPartners": "Parteneri selectați ({count})"
+    "selectedPartners": "Parteneri selectați ({count})",
+    "partner": "Partener",
+    "view": "Vizualizare",
+    "download": "Descarcă"
   },
   "language": {
     "romanian": "Română",
@@ -363,6 +366,10 @@
     "allArticles": "Toate articolele",
     "thisWeek": "Săptămâna aceasta",
     "publishedRecently": "Publicate recent",
+    "thisMonth": "Luna Aceasta",
+    "monthlyPublications": "Publicate luna aceasta",
+    "uncategorized": "Fără Categorie",
+    "noCategoryArticles": "Articole fără categorie",
     "thisMonth": "Luna aceasta",
     "monthlyPublications": "Publicații lunare",
     "drafts": "Schițe",
@@ -399,9 +406,8 @@
       "documentsNote": "Notă: Este necesar cel puțin un document. Puteți adăuga mai multe documente.",
       "tags": "Etichete (opțional)",
       "tagPlaceholder": "Adaugă o etichetă",
-      "publishDate": "Data publicării (opțional)",
-      "publishDatePlaceholder": "Lăsați gol pentru a salva ca schiță",
-      "publishDateNote": "Setați o dată pentru a programa publicarea, sau lăsați gol pentru a salva ca schiță",
+      "viewDocument": "Vizualizează documentul",
+      "downloadDocument": "Descarcă documentul",
       "updateArticle": "Actualizează articol",
       "createArticle": "Creează articol"
     },
@@ -415,8 +421,7 @@
       "actions": "Acțiuni",
       "noNews": "Nu au fost găsite articole de știri",
       "unknown": "Necunoscut",
-      "noCategory": "Fără categorie",
-      "draft": "Schiță"
+      "noCategory": "Fără categorie"
     }
   },
   "users": {

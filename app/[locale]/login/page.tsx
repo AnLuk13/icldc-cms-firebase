@@ -15,7 +15,9 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAppStore } from "@/lib/store";
-import { authApi, ApiError } from "@/lib/api";
+import { authApi } from "@/lib/api";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase/client";
 import { useTranslations } from "next-intl";
 import { toast } from "@/hooks/use-toast";
 
@@ -49,22 +51,23 @@ export default function LoginPage() {
     setError("");
 
     try {
-      await authApi.login(data).then((res) => {
-        login(res.user);
-        toast({
-          // title: t("auth.loginSuccess"),
-          // description: t("auth.loginSuccessDescription"),
-          title: "Success",
-        });
-        router.push("/");
-      });
+      // 1. Sign in with the Firebase client SDK — this sets auth.currentUser so
+      //    getIdToken() auto-refreshes on all subsequent API calls.
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password,
+      );
+      const idToken = await credential.user.getIdToken();
+
+      // 2. Exchange the ID token for an httpOnly session cookie and get user data.
+      const res = await authApi.login(idToken);
+      login(res.user);
+      toast({ title: "Success" });
+      router.push("/");
     } catch (err) {
       console.error("Login error:", err);
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError(err instanceof Error ? err.message : t("auth.loginError"));
-      }
+      setError(err instanceof Error ? err.message : t("auth.loginError"));
     } finally {
       setIsLoading(false);
     }

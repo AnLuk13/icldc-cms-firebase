@@ -106,16 +106,16 @@ export function NewsTable({ news, loading, onEdit, onDelete }: NewsTableProps) {
               <TableCell>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {newsItem.publishedAt ? (
+                  {newsItem.createdAt ? (
                     <div>
-                      {format(new Date(newsItem.publishedAt), "MMM dd, yyyy")}
+                      {format(new Date(newsItem.createdAt), "MMM dd, yyyy")}
                       <br />
                       <span className="text-xs">
-                        {format(new Date(newsItem.publishedAt), "HH:mm")}
+                        {format(new Date(newsItem.createdAt), "HH:mm")}
                       </span>
                     </div>
                   ) : (
-                    <Badge variant="secondary">{t("draft")}</Badge>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </div>
               </TableCell>
